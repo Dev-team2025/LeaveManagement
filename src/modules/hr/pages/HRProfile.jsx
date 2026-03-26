@@ -1,38 +1,38 @@
 import { useState } from 'react'
-import { useAppData } from '@/context/AppDataContext'
 import useAuth from '@/hooks/useAuth'
+import { useAppData } from '@/context/AppDataContext'
 
 function InfoRow({ label, value }) {
   return (
-    <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center py-3.5 border-b border-[#F1F5F9] last:border-0">
+    <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center">
       <span className="w-40 shrink-0 text-sm text-[#94A3B8]">{label}</span>
       <span className="text-sm font-medium text-[#0F172A]">{value || '—'}</span>
     </div>
   )
 }
 
-export default function Profile() {
+export default function HRProfile() {
   const { user } = useAuth()
   const { employees } = useAppData()
-  const myId = user?.id || 'EMP001'
-  const emp = employees.find((e) => e.id === myId) || employees[0] || {}
+  const myId = user?.id || 'EMP004'
+  const emp = employees.find((e) => e.id === myId) || employees.find((e) => e.role === 'hr') || {}
 
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ phone: emp.phone || '' })
+  const [form, setForm] = useState({ phone: emp.phone || '', designation: emp.designation || '' })
 
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#1D4ED8]">My Workspace</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#1D4ED8]">HR Workspace</p>
         <h1 className="mt-1 text-2xl font-semibold text-[#0F172A]">My Profile</h1>
-        <p className="mt-0.5 text-sm text-[#64748B]">Your personal and employment information</p>
+        <p className="mt-0.5 text-sm text-[#64748B]">Your personal and employment details</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-        {/* Avatar */}
+      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        {/* Avatar Card */}
         <div className="flex flex-col items-center gap-4 rounded-[20px] border border-[#E5E7EB] bg-white p-8">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#EFF6FF] text-2xl font-bold text-[#1D4ED8]">
-            {emp.avatar || 'AS'}
+            {emp.avatar || 'SK'}
           </div>
           <div className="text-center">
             <p className="font-semibold text-[#0F172A]">{emp.name}</p>
@@ -47,15 +47,19 @@ export default function Profile() {
               <span className="font-medium text-[#334155]">{emp.id}</span>
             </div>
             <div className="flex justify-between">
+              <span className="text-[#94A3B8]">Role</span>
+              <span className="font-medium capitalize text-[#334155]">{emp.role}</span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-[#94A3B8]">Department</span>
               <span className="font-medium text-[#334155]">{emp.department}</span>
             </div>
           </div>
         </div>
 
-        {/* Details */}
+        {/* Details Card */}
         <div className="rounded-[20px] border border-[#E5E7EB] bg-white p-6">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-5 flex items-center justify-between">
             <p className="font-semibold text-[#0F172A]">Personal Information</p>
             <button
               onClick={() => setEditing((e) => !e)}
@@ -71,7 +75,15 @@ export default function Profile() {
                 <label className="mb-1.5 block text-sm font-medium text-[#334155]">Phone Number</label>
                 <input
                   value={form.phone}
-                  onChange={(e) => setForm({ phone: e.target.value })}
+                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                  className="w-full rounded-xl border border-[#E5E7EB] px-4 py-2.5 text-sm text-[#334155] outline-none focus:border-[#1D4ED8] focus:ring-2 focus:ring-[#1D4ED8]/10"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-[#334155]">Designation</label>
+                <input
+                  value={form.designation}
+                  onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))}
                   className="w-full rounded-xl border border-[#E5E7EB] px-4 py-2.5 text-sm text-[#334155] outline-none focus:border-[#1D4ED8] focus:ring-2 focus:ring-[#1D4ED8]/10"
                 />
               </div>
@@ -83,13 +95,19 @@ export default function Profile() {
               </button>
             </div>
           ) : (
-            <div>
-              <InfoRow label="Full Name" value={emp.name} />
-              <InfoRow label="Email Address" value={emp.email} />
-              <InfoRow label="Phone Number" value={emp.phone} />
-              <InfoRow label="Designation" value={emp.designation} />
-              <InfoRow label="Department" value={emp.department} />
-              <InfoRow label="Join Date" value={emp.joinDate ? new Date(emp.joinDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'} />
+            <div className="divide-y divide-[#F1F5F9]">
+              {[
+                { label: 'Full Name', value: emp.name },
+                { label: 'Email Address', value: emp.email },
+                { label: 'Phone Number', value: emp.phone },
+                { label: 'Designation', value: emp.designation },
+                { label: 'Department', value: emp.department },
+                { label: 'Join Date', value: emp.joinDate ? new Date(emp.joinDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : '—' },
+              ].map((row) => (
+                <div key={row.label} className="py-3.5">
+                  <InfoRow label={row.label} value={row.value} />
+                </div>
+              ))}
             </div>
           )}
         </div>

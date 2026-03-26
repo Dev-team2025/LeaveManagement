@@ -60,11 +60,17 @@ export const SIDEBAR_LINKS = {
     { label: 'Dashboard', to: '/employee/dashboard' },
     { label: 'My Leaves', to: '/employee/my-leaves' },
     { label: 'Apply Leave', to: '/employee/apply-leave' },
+    { label: 'Profile', to: '/employee/profile' },
   ],
   [ROLES.HR]: [
     { label: 'Dashboard', to: '/hr/dashboard' },
     { label: 'Leave Requests', to: '/hr/leave-requests' },
+    { label: 'Leave Policies', to: '/hr/leave-policies' },
     { label: 'Employees', to: '/hr/employees' },
+    { label: 'Holiday Calendar', to: '/hr/holidays' },
+    { label: 'Reports', to: '/hr/reports' },
+    { label: 'Notifications', to: '/hr/notifications' },
+    { label: 'Profile', to: '/hr/profile' },
   ],
   [ROLES.MANAGER]: [
     { label: 'Dashboard', to: '/manager/dashboard' },

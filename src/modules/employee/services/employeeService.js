@@ -31,14 +31,6 @@ const dashboardData = {
   ],
   leaveTiles: [
     {
-      id: 'total',
-      leaveType: 'Total Leave',
-      tone: 'primary',
-      availableDays: 24,
-      usedDays: 9,
-      totalDays: 24,
-    },
-    {
       id: 'sick',
       leaveType: 'Sick Leave',
       tone: 'success',
@@ -107,7 +99,6 @@ const leaveHistory = [
     fromDate: '2026-03-22',
     toDate: '2026-03-24',
     status: LEAVE_STATUS.PENDING,
-    approvedBy: '--',
   },
   {
     id: 'L-1002',
@@ -115,7 +106,6 @@ const leaveHistory = [
     fromDate: '2026-02-10',
     toDate: '2026-02-11',
     status: LEAVE_STATUS.APPROVED,
-    approvedBy: 'Aarav Sharma',
   },
   {
     id: 'L-1003',
@@ -123,7 +113,6 @@ const leaveHistory = [
     fromDate: '2026-01-16',
     toDate: '2026-01-16',
     status: LEAVE_STATUS.REJECTED,
-    approvedBy: 'Aarav Sharma',
   },
   {
     id: 'L-1004',
@@ -131,7 +120,6 @@ const leaveHistory = [
     fromDate: '2025-12-18',
     toDate: '2025-12-19',
     status: LEAVE_STATUS.APPROVED,
-    approvedBy: 'Aarav Sharma',
   },
 ]
 
@@ -149,7 +137,7 @@ export const employeeService = {
   },
 
   async getLeaveTypes() {
-    return Promise.resolve(LEAVE_TYPES.filter((type) => type !== 'Annual'))
+    return Promise.resolve(LEAVE_TYPES)
   },
 
   async submitLeave(payload) {

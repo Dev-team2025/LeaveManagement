@@ -109,15 +109,6 @@ function EmployeeDashboard() {
       )
     }
 
-    if (tile.leaveType === 'Total Leave') {
-      return (
-        <>
-          <p className="font-display text-4xl font-semibold text-ink-900">{tile.totalDays}</p>
-          <p className="mt-1 text-xs font-medium text-ink-500">total allocation</p>
-        </>
-      )
-    }
-
     return (
       <>
         <p className="font-display text-4xl font-semibold text-ink-900">{tile.availableDays}</p>
@@ -196,7 +187,7 @@ function EmployeeDashboard() {
         </div>
       ) : null}
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         {dashboard.leaveTiles
           ?.filter((tile) => tile.leaveType !== 'Earned Leave')
           .map((tile) => (
@@ -221,27 +212,6 @@ function EmployeeDashboard() {
                   <div className="h-2 w-full rounded-full bg-ink-100">
                     <div
                       className={`h-2 rounded-full ${getBarColorClass(tile)}`}
-                      style={{
-                        width: `${getBarWidthPct(tile)}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ) : tile.leaveType === 'Total Leave' ? (
-                <div className="mt-4">
-                  <p className="text-xs font-medium text-ink-500">
-                    Used: <span className="font-semibold text-ink-700">{tile.usedDays}</span> days
-                  </p>
-                  <p className="mt-1 text-xs font-medium text-ink-500">
-                    Remaining:{' '}
-                    <span className="font-semibold text-ink-700">
-                      {Math.max(0, (tile.totalDays || 0) - (tile.usedDays || 0))}
-                    </span>{' '}
-                    days
-                  </p>
-                  <div className="mt-3 h-2 w-full rounded-full bg-ink-100">
-                    <div
-                      className="h-2 rounded-full bg-brand-600"
                       style={{
                         width: `${getBarWidthPct(tile)}%`,
                       }}
