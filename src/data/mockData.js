@@ -113,95 +113,75 @@ export const EMPLOYEES = [
 export const LEAVE_POLICIES = [
   {
     id: 'POL001',
-    leaveType: 'Annual Leave',
-    code: 'AL',
-    totalDays: 18,
-    carryForward: true,
-    maxCarryForward: 6,
-    encashable: true,
-    applicableTo: ['employee', 'manager', 'hr'],
-    description: 'Standard annual paid leave entitlement for all employees.',
-    color: '#2563EB',
-  },
-  {
-    id: 'POL002',
     leaveType: 'Sick Leave',
     code: 'SL',
-    totalDays: 10,
+    totalDays: 6,
     carryForward: false,
     maxCarryForward: 0,
     encashable: false,
     applicableTo: ['employee', 'manager', 'hr'],
-    description: 'For medical illness. Requires medical certificate for more than 3 consecutive days.',
+    description: 'Granted for health issues. Medical certificate required if > 2 days.',
     color: '#DC2626',
   },
   {
-    id: 'POL003',
+    id: 'POL002',
     leaveType: 'Casual Leave',
     code: 'CL',
-    totalDays: 8,
+    totalDays: 6,
     carryForward: false,
     maxCarryForward: 0,
     encashable: false,
     applicableTo: ['employee', 'manager', 'hr'],
-    description: 'For personal errands and short unplanned absences.',
+    description: 'For personal needs and short breaks. Upfront yearly allocation.',
     color: '#D97706',
   },
   {
+    id: 'POL003',
+    leaveType: 'Paid Leave',
+    code: 'PL',
+    totalDays: 12,
+    carryForward: true,
+    maxCarryForward: 12,
+    encashable: true,
+    applicableTo: ['employee', 'manager', 'hr'],
+    description: 'Annual paid leave entitlement for employees.',
+    color: '#4F46E5',
+  },
+  {
     id: 'POL004',
-    leaveType: 'Work From Home',
+    leaveType: 'WFH',
     code: 'WFH',
-    totalDays: 20,
+    totalDays: 24,
     carryForward: false,
     maxCarryForward: 0,
     encashable: false,
     applicableTo: ['employee', 'manager', 'hr'],
-    description: 'Remote work option. Subject to manager approval.',
+    description: 'Work from home allowance for emergency or special circumstances.',
     color: '#7C3AED',
-  },
-  {
-    id: 'POL005',
-    leaveType: 'Maternity Leave',
-    code: 'ML',
-    totalDays: 90,
-    carryForward: false,
-    maxCarryForward: 0,
-    encashable: false,
-    applicableTo: ['employee'],
-    description: 'Paid maternity leave as per statutory requirements.',
-    color: '#DB2777',
-  },
-  {
-    id: 'POL006',
-    leaveType: 'Paternity Leave',
-    code: 'PL',
-    totalDays: 7,
-    carryForward: false,
-    maxCarryForward: 0,
-    encashable: false,
-    applicableTo: ['employee', 'manager'],
-    description: 'Paid paternity leave for new fathers.',
-    color: '#059669',
   },
 ]
 
 export const LEAVE_BALANCES = [
   // EMP001 - Arjun Sharma
-  { id: 'BAL001', employeeId: 'EMP001', policyId: 'POL001', leaveType: 'Annual Leave', totalDays: 18, usedDays: 5, pendingDays: 2 },
-  { id: 'BAL002', employeeId: 'EMP001', policyId: 'POL002', leaveType: 'Sick Leave', totalDays: 10, usedDays: 2, pendingDays: 0 },
-  { id: 'BAL003', employeeId: 'EMP001', policyId: 'POL003', leaveType: 'Casual Leave', totalDays: 8, usedDays: 3, pendingDays: 1 },
-  { id: 'BAL004', employeeId: 'EMP001', policyId: 'POL004', leaveType: 'Work From Home', totalDays: 20, usedDays: 8, pendingDays: 0 },
+  { id: 'BAL001', employeeId: 'EMP001', policyId: 'POL001', leaveType: 'Sick Leave', totalDays: 6, usedDays: 2, pendingDays: 0 },
+  { id: 'BAL002', employeeId: 'EMP001', policyId: 'POL002', leaveType: 'Casual Leave', totalDays: 6, usedDays: 3, pendingDays: 1 },
+  { id: 'BAL001_3', employeeId: 'EMP001', policyId: 'POL003', leaveType: 'Paid Leave', totalDays: 12, usedDays: 0, pendingDays: 0 },
+  { id: 'BAL001_4', employeeId: 'EMP001', policyId: 'POL004', leaveType: 'WFH', totalDays: 24, usedDays: 2, pendingDays: 1 },
   // EMP002 - Priya Nair
-  { id: 'BAL005', employeeId: 'EMP002', policyId: 'POL001', leaveType: 'Annual Leave', totalDays: 18, usedDays: 10, pendingDays: 0 },
-  { id: 'BAL006', employeeId: 'EMP002', policyId: 'POL002', leaveType: 'Sick Leave', totalDays: 10, usedDays: 1, pendingDays: 0 },
-  { id: 'BAL007', employeeId: 'EMP002', policyId: 'POL003', leaveType: 'Casual Leave', totalDays: 8, usedDays: 2, pendingDays: 0 },
-  { id: 'BAL008', employeeId: 'EMP002', policyId: 'POL004', leaveType: 'Work From Home', totalDays: 20, usedDays: 4, pendingDays: 2 },
+  { id: 'BAL003', employeeId: 'EMP002', policyId: 'POL001', leaveType: 'Sick Leave', totalDays: 6, usedDays: 1, pendingDays: 0 },
+  { id: 'BAL004', employeeId: 'EMP002', policyId: 'POL002', leaveType: 'Casual Leave', totalDays: 6, usedDays: 2, pendingDays: 1 },
+  { id: 'BAL002_3', employeeId: 'EMP002', policyId: 'POL003', leaveType: 'Paid Leave', totalDays: 12, usedDays: 0, pendingDays: 0 },
+  { id: 'BAL002_4', employeeId: 'EMP002', policyId: 'POL004', leaveType: 'WFH', totalDays: 24, usedDays: 0, pendingDays: 1 },
   // EMP006 - Anjali Singh
-  { id: 'BAL009', employeeId: 'EMP006', policyId: 'POL001', leaveType: 'Annual Leave', totalDays: 18, usedDays: 3, pendingDays: 0 },
-  { id: 'BAL010', employeeId: 'EMP006', policyId: 'POL002', leaveType: 'Sick Leave', totalDays: 10, usedDays: 0, pendingDays: 0 },
+  { id: 'BAL005', employeeId: 'EMP006', policyId: 'POL001', leaveType: 'Sick Leave', totalDays: 6, usedDays: 0, pendingDays: 0 },
+  { id: 'BAL006', employeeId: 'EMP006', policyId: 'POL002', leaveType: 'Casual Leave', totalDays: 6, usedDays: 0, pendingDays: 0 },
+  { id: 'BAL006_3', employeeId: 'EMP006', policyId: 'POL003', leaveType: 'Paid Leave', totalDays: 12, usedDays: 5, pendingDays: 1 },
+  { id: 'BAL006_4', employeeId: 'EMP006', policyId: 'POL004', leaveType: 'WFH', totalDays: 24, usedDays: 0, pendingDays: 0 },
   // EMP007 - Kiran Patel
-  { id: 'BAL011', employeeId: 'EMP007', policyId: 'POL001', leaveType: 'Annual Leave', totalDays: 18, usedDays: 7, pendingDays: 1 },
-  { id: 'BAL012', employeeId: 'EMP007', policyId: 'POL003', leaveType: 'Casual Leave', totalDays: 8, usedDays: 4, pendingDays: 0 },
+  { id: 'BAL007', employeeId: 'EMP007', policyId: 'POL001', leaveType: 'Sick Leave', totalDays: 6, usedDays: 1, pendingDays: 0 },
+  { id: 'BAL008', employeeId: 'EMP007', policyId: 'POL002', leaveType: 'Casual Leave', totalDays: 6, usedDays: 4, pendingDays: 0 },
+  { id: 'BAL007_3', employeeId: 'EMP007', policyId: 'POL003', leaveType: 'Paid Leave', totalDays: 12, usedDays: 0, pendingDays: 0 },
+  { id: 'BAL007_4', employeeId: 'EMP007', policyId: 'POL004', leaveType: 'WFH', totalDays: 24, usedDays: 0, pendingDays: 0 },
 ]
 
 export const LEAVE_REQUESTS = [
@@ -209,21 +189,21 @@ export const LEAVE_REQUESTS = [
     id: 'LR001',
     employeeId: 'EMP001',
     policyId: 'POL001',
-    leaveType: 'Annual Leave',
-    fromDate: '2026-04-07',
-    toDate: '2026-04-09',
-    days: 3,
-    reason: 'Family trip to Goa',
+    leaveType: 'Sick Leave',
+    fromDate: '2026-02-10',
+    toDate: '2026-02-11',
+    days: 2,
+    reason: 'Fever and rest',
     status: 'approved',
-    appliedOn: '2026-03-20',
+    appliedOn: '2026-02-10',
     reviewedBy: 'EMP003',
-    reviewedOn: '2026-03-21',
-    reviewNote: 'Approved. Enjoy!',
+    reviewedOn: '2026-02-10',
+    reviewNote: '',
   },
   {
     id: 'LR002',
     employeeId: 'EMP001',
-    policyId: 'POL003',
+    policyId: 'POL002',
     leaveType: 'Casual Leave',
     fromDate: '2026-03-28',
     toDate: '2026-03-28',
@@ -237,54 +217,24 @@ export const LEAVE_REQUESTS = [
   },
   {
     id: 'LR003',
-    employeeId: 'EMP001',
-    policyId: 'POL002',
-    leaveType: 'Sick Leave',
-    fromDate: '2026-02-10',
-    toDate: '2026-02-11',
-    days: 2,
-    reason: 'Fever and rest',
-    status: 'approved',
-    appliedOn: '2026-02-10',
-    reviewedBy: 'EMP003',
-    reviewedOn: '2026-02-10',
-    reviewNote: '',
-  },
-  {
-    id: 'LR004',
     employeeId: 'EMP002',
-    policyId: 'POL004',
-    leaveType: 'Work From Home',
-    fromDate: '2026-03-25',
-    toDate: '2026-03-26',
-    days: 2,
-    reason: 'Internet installation at home',
+    policyId: 'POL002',
+    leaveType: 'Casual Leave',
+    fromDate: '2026-04-10',
+    toDate: '2026-04-10',
+    days: 1,
+    reason: 'Visiting parents',
     status: 'pending',
-    appliedOn: '2026-03-23',
+    appliedOn: '2026-03-25',
     reviewedBy: null,
     reviewedOn: null,
     reviewNote: '',
   },
   {
-    id: 'LR005',
-    employeeId: 'EMP002',
-    policyId: 'POL001',
-    leaveType: 'Annual Leave',
-    fromDate: '2026-01-15',
-    toDate: '2026-01-24',
-    days: 10,
-    reason: 'Annual family vacation',
-    status: 'approved',
-    appliedOn: '2026-01-05',
-    reviewedBy: 'EMP003',
-    reviewedOn: '2026-01-06',
-    reviewNote: 'Planned in advance, approved.',
-  },
-  {
-    id: 'LR006',
+    id: 'LR004',
     employeeId: 'EMP006',
-    policyId: 'POL001',
-    leaveType: 'Annual Leave',
+    policyId: 'POL002',
+    leaveType: 'Casual Leave',
     fromDate: '2026-04-14',
     toDate: '2026-04-16',
     days: 3,
@@ -296,10 +246,10 @@ export const LEAVE_REQUESTS = [
     reviewNote: '',
   },
   {
-    id: 'LR007',
+    id: 'LR005',
     employeeId: 'EMP007',
-    policyId: 'POL001',
-    leaveType: 'Annual Leave',
+    policyId: 'POL002',
+    leaveType: 'Casual Leave',
     fromDate: '2026-03-30',
     toDate: '2026-03-30',
     days: 1,
@@ -311,16 +261,46 @@ export const LEAVE_REQUESTS = [
     reviewNote: 'Sprint deadline on that day.',
   },
   {
-    id: 'LR008',
-    employeeId: 'EMP007',
-    policyId: 'POL003',
-    leaveType: 'Casual Leave',
+    id: 'LR006',
+    employeeId: 'EMP001',
+    policyId: 'POL004',
+    leaveType: 'WFH',
     fromDate: '2026-04-22',
-    toDate: '2026-04-25',
-    days: 4,
-    reason: 'Relocation assistance for family',
+    toDate: '2026-04-22',
+    days: 1,
+    reason: 'Internet issue at home, need to work remotely.',
     status: 'pending',
-    appliedOn: '2026-03-24',
+    appliedOn: '2026-04-20',
+    reviewedBy: null,
+    reviewedOn: null,
+    reviewNote: '',
+  },
+  {
+    id: 'LR007',
+    employeeId: 'EMP002',
+    policyId: 'POL004',
+    leaveType: 'WFH',
+    fromDate: '2026-04-25',
+    toDate: '2026-04-26',
+    days: 2,
+    reason: 'Family emergency, need to stay at home.',
+    status: 'pending',
+    appliedOn: '2026-04-21',
+    reviewedBy: null,
+    reviewedOn: null,
+    reviewNote: '',
+  },
+  {
+    id: 'LR008',
+    employeeId: 'EMP006',
+    policyId: 'POL003',
+    leaveType: 'Paid Leave',
+    fromDate: '2026-05-01',
+    toDate: '2026-05-05',
+    days: 5,
+    reason: 'Family vacation',
+    status: 'pending',
+    appliedOn: '2026-04-15',
     reviewedBy: null,
     reviewedOn: null,
     reviewNote: '',
@@ -348,9 +328,9 @@ export const NOTIFICATIONS = [
     recipientId: 'EMP001',
     type: 'leave_approved',
     title: 'Leave Approved',
-    message: 'Your Annual Leave request for Apr 7–9 has been approved by Rohan Mehta.',
+    message: 'Your Sick Leave request for Feb 10–11 has been approved by Rohan Mehta.',
     isRead: false,
-    createdAt: '2026-03-21T09:30:00',
+    createdAt: '2026-02-10T09:30:00',
     relatedId: 'LR001',
   },
   {
@@ -373,71 +353,27 @@ export const NOTIFICATIONS = [
     createdAt: '2026-03-22T11:05:00',
     relatedId: 'LR002',
   },
-  {
-    id: 'NOT004',
-    recipientId: 'EMP003',
-    type: 'leave_pending',
-    title: 'New Leave Request',
-    message: 'Priya Nair has applied for WFH on Mar 25–26. Action required.',
-    isRead: false,
-    createdAt: '2026-03-23T10:00:00',
-    relatedId: 'LR004',
-  },
-  {
-    id: 'NOT005',
-    recipientId: 'EMP004',
-    type: 'policy_reminder',
-    title: 'Leave Policy Update Reminder',
-    message: 'Annual leave carry-forward policy review is due for FY 2026-27.',
-    isRead: false,
-    createdAt: '2026-03-20T08:00:00',
-    relatedId: null,
-  },
-  {
-    id: 'NOT006',
-    recipientId: 'EMP007',
-    type: 'leave_rejected',
-    title: 'Leave Rejected',
-    message: 'Your Annual Leave request for Mar 30 was rejected. Reason: Sprint deadline.',
-    isRead: false,
-    createdAt: '2026-03-19T15:00:00',
-    relatedId: 'LR007',
-  },
-  {
-    id: 'NOT007',
-    recipientId: 'EMP004',
-    type: 'leave_pending',
-    title: 'New Leave Requests Pending',
-    message: '3 leave requests are awaiting review across teams.',
-    isRead: true,
-    createdAt: '2026-03-24T09:00:00',
-    relatedId: null,
-  },
 ]
 
 // ─── Computed helpers ─────────────────────────────────────────────────────────
 
-export function getEmployeeById(id) {
-  return EMPLOYEES.find((e) => e.id === id) || null
+export function getEmployeeById(id, employees = EMPLOYEES) {
+  return employees.find((e) => e.id === id) || null
 }
 
-export function getLeaveRequestsByEmployee(employeeId) {
-  return LEAVE_REQUESTS.filter((lr) => lr.employeeId === employeeId)
+export function getLeaveRequestsByEmployee(employeeId, requests = LEAVE_REQUESTS) {
+  return requests.filter((lr) => lr.employeeId === employeeId)
 }
 
-export function getLeaveRequestsByManager(managerId) {
-  const teamIds = EMPLOYEES.filter((e) => e.managerId === managerId).map((e) => e.id)
-  return LEAVE_REQUESTS.filter((lr) => teamIds.includes(lr.employeeId))
+export function getLeaveRequestsByManager(managerId, employeesArray = EMPLOYEES, requests = LEAVE_REQUESTS) {
+  const teamIds = employeesArray.filter((e) => e.managerId === managerId).map((e) => e.id)
+  return requests.filter((lr) => teamIds.includes(lr.employeeId))
 }
 
-export function getPendingRequests() {
-  return LEAVE_REQUESTS.filter((lr) => lr.status === 'pending')
+export function getBalancesForEmployee(employeeId, balances = LEAVE_BALANCES) {
+  return balances.filter((b) => b.employeeId === employeeId)
 }
 
-export function getBalancesForEmployee(employeeId) {
-  return LEAVE_BALANCES.filter((b) => b.employeeId === employeeId)
-}
-
-export function getNotificationsForUser(employeeId) {
-  return NOTIFICATIONS.filter((n) => n.recipientId === employeeId)
+export function getNotificationsForUser(employeeId, notificationsArray = NOTIFICATIONS) {
+  return notificationsArray.filter((n) => n.recipientId === employeeId)
 }

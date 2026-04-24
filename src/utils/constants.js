@@ -32,7 +32,7 @@ export const API_ENDPOINTS = {
   },
 }
 
-export const LEAVE_TYPES = ['Annual', 'Sick', 'Casual', 'Work From Home', 'Maternity']
+export const LEAVE_TYPES = ['Sick Leave', 'Casual Leave', 'Paid Leave', 'WFH']
 
 export const LEAVE_STATUS = {
   APPROVED: 'approved',
@@ -63,18 +63,22 @@ export const SIDEBAR_LINKS = {
     { label: 'Profile', to: '/employee/profile' },
   ],
   [ROLES.HR]: [
-    { label: 'Dashboard', to: '/hr/dashboard' },
-    { label: 'Leave Requests', to: '/hr/leave-requests' },
-    { label: 'Leave Policies', to: '/hr/leave-policies' },
-    { label: 'Employees', to: '/hr/employees' },
-    { label: 'Holiday Calendar', to: '/hr/holidays' },
-    { label: 'Reports', to: '/hr/reports' },
-    { label: 'Notifications', to: '/hr/notifications' },
-    { label: 'Profile', to: '/hr/profile' },
+    { label: 'Dashboard', to: '/hr/dashboard', icon: 'Dashboard' },
+    { label: 'Leave Requests', to: '/hr/leave-requests', icon: 'Requests' },
+    { label: 'Holiday Calendar', to: '/hr/holidays', icon: 'Calendar' },
+    { label: 'Reports', to: '/hr/reports', icon: 'Reports' },
+    { label: 'Notifications', to: '/hr/notifications', icon: 'Notifications' },
+    { label: 'Profile', to: '/hr/profile', icon: 'Profile' },
+    { label: 'Leave Policies', to: '/hr/leave-policies', icon: 'Policies' },
   ],
   [ROLES.MANAGER]: [
-    { label: 'Dashboard', to: '/manager/dashboard' },
-    { label: 'Team Leaves', to: '/manager/team-leaves' },
+    { label: 'Dashboard', to: '/manager/dashboard', icon: 'Dashboard' },
+    { label: 'Team Leaves', to: '/manager/team-leaves', icon: 'Requests' },
+    { label: 'Team Members', to: '/manager/team-members', icon: 'Employees' },
+    { label: 'Team Calendar', to: '/manager/team-calendar', icon: 'Calendar' },
+    { label: 'WFH Requests', to: '/manager/wfh-requests', icon: 'Policies' },
+    { label: 'Notifications', to: '/manager/notifications', icon: 'Notifications' },
+    { label: 'Profile', to: '/manager/profile', icon: 'Profile' },
   ],
   [ROLES.ADMIN]: [
     { label: 'Dashboard', to: '/admin/dashboard' },

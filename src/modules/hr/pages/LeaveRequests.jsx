@@ -8,9 +8,10 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-function Avatar({ initials }) {
+function Avatar({ initials, size = 'sm' }) {
+  const sizeClasses = size === 'md' ? 'h-11 w-11 text-sm' : 'h-8 w-8 text-xs'
   return (
-    <div className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full bg-[#EFF6FF] text-xs font-semibold text-[#1D4ED8]">
+    <div className={`${sizeClasses} shrink-0 flex items-center justify-center rounded-full bg-[#EFF6FF] font-semibold text-[#1D4ED8]`}>
       {initials}
     </div>
   )
@@ -59,162 +60,216 @@ export default function LeaveRequests() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       {/* Header */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#1D4ED8]">HR Workspace</p>
-        <h1 className="mt-1 text-2xl font-semibold text-[#0F172A]">All Leave Requests</h1>
-        <p className="mt-0.5 text-sm text-[#64748B]">Review and manage leave applications across the organization</p>
-      </div>
-
-      {/* Filters + Search */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
-          {FILTERS.map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold capitalize transition ${
-                filter === f
-                  ? 'bg-[#1D4ED8] text-white'
-                  : 'bg-white border border-[#E5E7EB] text-[#64748B] hover:bg-[#F8F9FC]'
-              }`}
-            >
-              {f}
-              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${filter === f ? 'bg-white/20 text-white' : 'bg-[#F1F5F9] text-[#64748B]'}`}>
-                {counts[f]}
-              </span>
-            </button>
-          ))}
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-display text-3xl font-bold text-ink-900">All Leave Requests</h1>
+          <p className="mt-1 text-sm text-ink-500">Review and manage leave applications across the organisation</p>
         </div>
-        <input
-          type="text"
-          placeholder="Search by name or leave type…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl border border-[#E5E7EB] bg-white px-4 py-2.5 text-sm text-[#334155] placeholder-[#94A3B8] outline-none focus:border-[#1D4ED8] focus:ring-2 focus:ring-[#1D4ED8]/10 sm:w-72"
-        />
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-[16px] border border-[#E5E7EB] bg-white">
-        <table className="min-w-full divide-y divide-[#F1F5F9] text-sm">
-          <thead>
-            <tr className="bg-[#F8F9FC]">
-              {['Employee', 'Leave Type', 'Duration', 'Days', 'Applied On', 'Status', 'Actions'].map((h) => (
-                <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-[#64748B]">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#F1F5F9]">
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-5 py-12 text-center text-sm text-[#94A3B8]">
-                  No leave requests match the selected filter.
-                </td>
-              </tr>
-            ) : (
-              filtered.map((req) => {
-                const emp = getEmployeeById(req.employeeId)
-                return (
-                  <tr key={req.id} className="transition-colors hover:bg-[#F8F9FC]">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar initials={emp?.avatar || '??'} />
-                        <div>
-                          <p className="font-medium text-[#0F172A]">{emp?.name || req.employeeId}</p>
-                          <p className="text-xs text-[#94A3B8]">{emp?.department}</p>
+      {/* Filters + Search Card */}
+      <div className="rounded-[32px] border border-ink-100 bg-white p-6 shadow-panel lg:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap gap-2">
+            {FILTERS.map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`group flex items-center gap-3 rounded-2xl px-5 py-3 text-sm font-bold transition ${
+                  filter === f
+                    ? 'bg-brand-600 text-white shadow-lg shadow-brand-200'
+                    : 'bg-ink-50 text-ink-500 hover:bg-ink-100'
+                }`}
+              >
+                <span className="capitalize">{f}</span>
+                <span className={`flex h-6 min-w-[24px] items-center justify-center rounded-lg px-1.5 text-[10px] font-black transition ${
+                  filter === f ? 'bg-white/20 text-white' : 'bg-ink-200 text-ink-600 group-hover:bg-ink-300'
+                }`}>
+                  {counts[f]}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="relative">
+            <svg className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search by name or type…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-2xl border border-ink-100 bg-ink-50 pl-11 pr-5 py-3.5 text-sm text-ink-900 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-100 lg:w-80"
+            />
+          </div>
+        </div>
+
+        {/* Table Container */}
+        <div className="mt-8 overflow-hidden rounded-2xl border border-ink-50 bg-white">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-ink-50 text-sm">
+              <thead>
+                <tr className="bg-ink-25/50">
+                  {['Employee', 'Leave Type', 'Duration', 'Applied On', 'Status', 'Actions'].map((h) => (
+                    <th key={h} className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-ink-400">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-50">
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-ink-50 text-ink-300">
+                          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
                         </div>
+                        <p className="mt-4 text-sm font-bold text-ink-900">No requests found</p>
+                        <p className="mt-1 text-xs text-ink-400">Try adjusting your filters or search term</p>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-[#334155]">{req.leaveType}</td>
-                    <td className="px-5 py-4 text-[#334155]">
-                      {formatDate(req.fromDate)} – {formatDate(req.toDate)}
-                    </td>
-                    <td className="px-5 py-4 font-semibold text-[#0F172A]">{req.days}d</td>
-                    <td className="px-5 py-4 text-[#64748B]">{formatDate(req.appliedOn)}</td>
-                    <td className="px-5 py-4">
-                      <Badge status={req.status} />
-                    </td>
-                    <td className="px-5 py-4">
-                      {req.status === 'pending' ? (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => openReview(req, 'approve')}
-                            className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => openReview(req, 'reject')}
-                            className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 transition"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-[#94A3B8]">
-                          {req.reviewedOn ? formatDate(req.reviewedOn) : '—'}
-                        </span>
-                      )}
-                    </td>
                   </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
+                ) : (
+                  filtered.map((req) => {
+                    const emp = getEmployeeById(req.employeeId)
+                    return (
+                      <tr key={req.id} className="transition-colors hover:bg-ink-25/30">
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-3">
+                            <Avatar initials={emp?.avatar || '??'} />
+                            <div>
+                              <p className="font-bold text-ink-900">{emp?.name || req.employeeId}</p>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">{emp?.department}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <span className="rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700">
+                            {req.leaveType}
+                          </span>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-ink-900">
+                              {formatDate(req.fromDate)} – {formatDate(req.toDate)}
+                            </span>
+                            <span className="mt-0.5 text-[10px] font-medium text-ink-400">{req.days} days requested</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-5 text-xs font-medium text-ink-500">
+                          {formatDate(req.appliedOn)}
+                        </td>
+                        <td className="px-6 py-5">
+                          <Badge status={req.status} />
+                        </td>
+                        <td className="px-6 py-5">
+                          {req.status === 'pending' ? (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => openReview(req, 'approve')}
+                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition hover:bg-emerald-600 hover:text-white shadow-sm"
+                                title="Approve"
+                              >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => openReview(req, 'reject')}
+                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-600 hover:text-white shadow-sm"
+                                title="Reject"
+                              >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
+                              {req.reviewedOn ? `Reviewed: ${formatDate(req.reviewedOn)}` : '—'}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       {/* Review Modal */}
       <Modal
         isOpen={Boolean(reviewModal)}
         onClose={() => setReviewModal(null)}
-        title={reviewModal?.action === 'approve' ? '✅ Approve Leave' : '❌ Reject Leave'}
+        title={reviewModal?.action === 'approve' ? 'Approve Leave' : 'Reject Leave'}
       >
         {reviewModal && (
-          <div className="space-y-4">
-            <div className="rounded-xl bg-[#F8F9FC] p-4 text-sm">
-              <p className="font-semibold text-[#0F172A]">
-                {getEmployeeById(reviewModal.request.employeeId)?.name}
-              </p>
-              <p className="mt-1 text-[#64748B]">
-                {reviewModal.request.leaveType} · {formatDate(reviewModal.request.fromDate)} – {formatDate(reviewModal.request.toDate)} ({reviewModal.request.days} days)
-              </p>
-              {reviewModal.request.reason && (
-                <p className="mt-2 text-[#64748B]"><strong>Reason:</strong> {reviewModal.request.reason}</p>
-              )}
+          <div className="space-y-6 pt-2">
+            <div className="rounded-3xl bg-ink-25 p-6 border border-ink-50">
+              <div className="flex items-center gap-4">
+                <Avatar initials={getEmployeeById(reviewModal.request.employeeId)?.avatar || '??'} size="md" />
+                <div>
+                  <p className="font-bold text-ink-900">
+                    {getEmployeeById(reviewModal.request.employeeId)?.name}
+                  </p>
+                  <p className="mt-0.5 text-xs font-medium text-ink-500">
+                    {reviewModal.request.leaveType} · {reviewModal.request.days} days
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 border-t border-ink-50 pt-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-ink-400 mb-2">Duration</p>
+                <p className="text-sm font-bold text-ink-700">
+                  {formatDate(reviewModal.request.fromDate)} – {formatDate(reviewModal.request.toDate)}
+                </p>
+                {reviewModal.request.reason && (
+                  <>
+                    <p className="text-xs font-bold uppercase tracking-widest text-ink-400 mb-2 mt-4">Reason</p>
+                    <p className="text-sm italic text-ink-600 leading-relaxed bg-white rounded-2xl p-4 border border-ink-50">
+                      "{reviewModal.request.reason}"
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#334155]">
-                Note (optional)
+            
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-ink-900">
+                Decision Note <span className="text-ink-400 font-normal">(Optional)</span>
               </label>
               <textarea
-                rows={3}
+                rows={4}
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
-                placeholder="Add a note for the employee…"
-                className="w-full rounded-xl border border-[#E5E7EB] px-4 py-3 text-sm text-[#334155] outline-none focus:border-[#1D4ED8] focus:ring-2 focus:ring-[#1D4ED8]/10"
+                placeholder={reviewModal.action === 'approve' ? "Add an encouraging note..." : "Explain the reason for rejection..."}
+                className="w-full rounded-2xl border border-ink-100 bg-white px-5 py-4 text-sm text-ink-900 outline-none transition placeholder:text-ink-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 shadow-sm"
               />
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={confirmReview}
-                className={`flex-1 rounded-xl py-2.5 text-sm font-semibold text-white transition ${
-                  reviewModal.action === 'approve'
-                    ? 'bg-emerald-600 hover:bg-emerald-700'
-                    : 'bg-red-600 hover:bg-red-700'
-                }`}
-              >
-                Confirm {reviewModal.action === 'approve' ? 'Approval' : 'Rejection'}
-              </button>
+
+            <div className="flex gap-4 pt-2">
               <button
                 onClick={() => setReviewModal(null)}
-                className="flex-1 rounded-xl border border-[#E5E7EB] py-2.5 text-sm font-semibold text-[#64748B] hover:bg-[#F8F9FC]"
+                className="flex-1 rounded-2xl border border-ink-100 bg-white px-6 py-4 text-sm font-bold text-ink-900 transition hover:bg-ink-50"
               >
                 Cancel
+              </button>
+              <button
+                onClick={confirmReview}
+                className={`flex-[2] rounded-2xl px-6 py-4 text-sm font-bold text-white shadow-lg transition ${
+                  reviewModal.action === 'approve' 
+                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100' 
+                    : 'bg-red-600 hover:bg-red-700 shadow-red-100'
+                }`}
+              >
+                {reviewModal.action === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
               </button>
             </div>
           </div>

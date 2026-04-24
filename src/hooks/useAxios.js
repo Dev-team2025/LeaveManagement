@@ -1,20 +1,23 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { useAuth } from '@/hooks/useAuth'
 
 export function useAxios() {
   const { token, logout } = useAuth()
-  const instanceRef = useRef(
-    axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }),
+  
+  const instance = useMemo(
+    () =>
+      axios.create({
+        baseURL: import.meta.env.VITE_API_BASE_URL,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }),
+    []
   )
 
   useEffect(() => {
-    const requestInterceptor = instanceRef.current.interceptors.request.use((config) => {
+    const requestInterceptor = instance.interceptors.request.use((config) => {
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
       }
@@ -22,7 +25,7 @@ export function useAxios() {
       return config
     })
 
-    const responseInterceptor = instanceRef.current.interceptors.response.use(
+    const responseInterceptor = instance.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
@@ -34,12 +37,12 @@ export function useAxios() {
     )
 
     return () => {
-      instanceRef.current.interceptors.request.eject(requestInterceptor)
-      instanceRef.current.interceptors.response.eject(responseInterceptor)
+      instance.interceptors.request.eject(requestInterceptor)
+      instance.interceptors.response.eject(responseInterceptor)
     }
-  }, [logout, token])
+  }, [instance, logout, token])
 
-  return instanceRef.current
+  return instance
 }
 
 export default useAxios

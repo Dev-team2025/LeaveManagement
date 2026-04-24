@@ -6,7 +6,7 @@ function Navbar({ onToggleSidebar }) {
   const { user, role, logout } = useAuth()
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/70 bg-white/75 px-4 py-4 backdrop-blur-xl lg:px-8">
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-ink-50 bg-white/95 px-4 py-4 backdrop-blur-xl shadow-sm lg:px-8">
       <div className="flex items-center gap-3">
         <button
           type="button"

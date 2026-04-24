@@ -1,5 +1,4 @@
 import { useEffect, useState, useMemo } from 'react'
-import Button from '@/modules/employee/components/Button'
 import InputField from '@/modules/employee/components/InputField'
 import employeeService from '@/modules/employee/services/employeeService'
 

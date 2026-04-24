@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { StatCard } from '@/components/common'
 import { useAppData } from '@/context/AppDataContext'
 import useAuth from '@/hooks/useAuth'
 import { getEmployeeById } from '@/data/mockData'
@@ -74,7 +73,7 @@ function Avatar({ initials, size = 'sm' }) {
 }
 
 export default function HRDashboard() {
-  const { leaveRequests, employees, notifications, getPendingRequests } = useAppData()
+  const { leaveRequests, employees, notifications } = useAppData()
   const { user } = useAuth()
 
   const stats = useMemo(() => {
@@ -96,107 +95,161 @@ export default function HRDashboard() {
   )
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#1D4ED8]">HR Workspace</p>
-          <h1 className="mt-1 text-2xl font-semibold text-[#0F172A]">Organization Leave Pulse</h1>
-          <p className="mt-0.5 text-sm text-[#64748B]">Overview of all leave activity across the organization</p>
+          <h1 className="font-display text-3xl font-bold text-ink-900">Organisation Leave Pulse</h1>
+          <p className="mt-1 text-sm text-ink-500">Real-time overview of leave activity and workforce distribution</p>
         </div>
         <div className="flex items-center gap-3">
           {unreadCount > 0 && (
-            <Link to="/hr/notifications" className="relative inline-flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-medium text-[#334155] hover:bg-[#F8F9FC]">
-              <span>Notifications</span>
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1D4ED8] text-xs font-bold text-white">{unreadCount}</span>
+            <Link to="/hr/notifications" className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-ink-100 bg-white transition hover:bg-ink-50">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-600">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white ring-4 ring-white">{unreadCount}</span>
             </Link>
           )}
-          <Link to="/hr/leave-requests" className="inline-flex items-center gap-2 rounded-xl bg-[#1D4ED8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1E40AF]">
+          <Link to="/hr/leave-requests" className="inline-flex h-11 items-center gap-2 rounded-2xl bg-brand-600 px-5 text-sm font-semibold text-white shadow-lg shadow-brand-200 transition hover:bg-brand-700">
             View All Requests
           </Link>
         </div>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Active Employees" value={stats.totalEmp} sub="Currently employed" icon={<UsersIcon />} accentColor="#1D4ED8" />
-        <StatCard label="Pending Approvals" value={stats.pending} sub="Awaiting action" icon={<ClockIcon />} accentColor="#D97706" />
-        <StatCard label="Approved This Month" value={stats.approved} sub="Total approved leaves" icon={<CheckCircleIcon />} accentColor="#16A34A" />
-        <StatCard label="Rejected Requests" value={stats.rejected} sub="Total rejected" icon={<XCircleIcon />} accentColor="#DC2626" />
-      </div>
-
-      {/* Recent Requests */}
-      <div className="rounded-[20px] border border-[#E5E7EB] bg-white">
-        <div className="flex items-center justify-between border-b border-[#F1F5F9] px-6 py-4">
-          <div>
-            <p className="font-semibold text-[#0F172A]">Recent Leave Requests</p>
-            <p className="mt-0.5 text-xs text-[#94A3B8]">Latest requests across the organization</p>
-          </div>
-          <Link to="/hr/leave-requests" className="text-sm font-semibold text-[#1D4ED8] hover:text-[#1E40AF]">
-            See all →
-          </Link>
-        </div>
-        <div className="divide-y divide-[#F1F5F9]">
-          {recentRequests.map((req) => {
-            const emp = getEmployeeById(req.employeeId)
-            return (
-              <div key={req.id} className="flex items-center gap-4 px-6 py-4 transition-colors hover:bg-[#F8F9FC]">
-                <Avatar initials={emp?.avatar || '??'} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-[#0F172A]">{emp?.name || req.employeeId}</p>
-                  <p className="flex items-center gap-1.5 text-xs text-[#64748B]">
-                    <CalIcon />
-                    {req.leaveType} · {formatDate(req.fromDate)} – {formatDate(req.toDate)} ({req.days}d)
-                  </p>
-                </div>
-                <StatusPill status={req.status} />
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Department Breakdown */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-[20px] border border-[#E5E7EB] bg-white p-6">
-          <p className="font-semibold text-[#0F172A]">Employees by Department</p>
-          <p className="mt-0.5 mb-5 text-xs text-[#94A3B8]">Headcount distribution</p>
-          {[...new Set(employees.map((e) => e.department))].map((dept) => {
-            const count = employees.filter((e) => e.department === dept).length
-            const pct = Math.round((count / employees.length) * 100)
-            return (
-              <div key={dept} className="mb-3">
-                <div className="mb-1 flex justify-between text-xs">
-                  <span className="font-medium text-[#334155]">{dept}</span>
-                  <span className="text-[#64748B]">{count} employees</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-[#F1F5F9]">
-                  <div className="h-2 rounded-full bg-[#1D4ED8]" style={{ width: `${pct}%` }} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="rounded-[20px] border border-[#E5E7EB] bg-white p-6">
-          <p className="font-semibold text-[#0F172A]">Leave Status Summary</p>
-          <p className="mt-0.5 mb-5 text-xs text-[#94A3B8]">All-time breakdown</p>
-          {[
-            { label: 'Approved', count: stats.approved, color: '#16A34A', bg: '#F0FDF4' },
-            { label: 'Pending', count: stats.pending, color: '#D97706', bg: '#FFFBEB' },
-            { label: 'Rejected', count: stats.rejected, color: '#DC2626', bg: '#FEF2F2' },
-          ].map((item) => (
-            <div key={item.label} className="mb-3 flex items-center justify-between rounded-xl p-3.5" style={{ backgroundColor: item.bg }}>
-              <div className="flex items-center gap-2.5">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                <span className="text-sm font-medium text-[#334155]">{item.label}</span>
-              </div>
-              <span className="text-sm font-bold" style={{ color: item.color }}>{item.count}</span>
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-[32px] border border-ink-100 bg-white p-6 shadow-panel">
+          <div className="flex items-center justify-between">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+              <UsersIcon />
             </div>
-          ))}
-          <div className="mt-4 rounded-xl bg-[#F8F9FC] p-3.5 text-center">
-            <p className="text-xs text-[#64748B]">Total Requests</p>
-            <p className="text-2xl font-bold text-[#0F172A]">{leaveRequests.length}</p>
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">+2 this month</span>
+          </div>
+          <div className="mt-5">
+            <p className="text-sm font-medium text-ink-500">Active Employees</p>
+            <h3 className="mt-1 text-3xl font-bold text-ink-900">{stats.totalEmp}</h3>
+          </div>
+        </div>
+
+        <div className="rounded-[32px] border border-ink-100 bg-white p-6 shadow-panel">
+          <div className="flex items-center justify-between">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+              <ClockIcon />
+            </div>
+            {stats.pending > 0 && (
+              <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">Action Required</span>
+            )}
+          </div>
+          <div className="mt-5">
+            <p className="text-sm font-medium text-ink-500">Pending Approvals</p>
+            <h3 className="mt-1 text-3xl font-bold text-ink-900">{stats.pending}</h3>
+          </div>
+        </div>
+
+        <div className="rounded-[32px] border border-ink-100 bg-white p-6 shadow-panel">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+            <CheckCircleIcon />
+          </div>
+          <div className="mt-5">
+            <p className="text-sm font-medium text-ink-500">Approved (Month)</p>
+            <h3 className="mt-1 text-3xl font-bold text-ink-900">{stats.approved}</h3>
+          </div>
+        </div>
+
+        <div className="rounded-[32px] border border-ink-100 bg-white p-6 shadow-panel">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+            <XCircleIcon />
+          </div>
+          <div className="mt-5">
+            <p className="text-sm font-medium text-ink-500">Rejected (Total)</p>
+            <h3 className="mt-1 text-3xl font-bold text-ink-900">{stats.rejected}</h3>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent Requests */}
+        <div className="lg:col-span-2 rounded-[32px] border border-ink-100 bg-white shadow-panel">
+          <div className="flex items-center justify-between border-b border-ink-50 px-8 py-6">
+            <div>
+              <h3 className="text-lg font-bold text-ink-900">Recent Leave Requests</h3>
+              <p className="text-sm text-ink-500">Latest applications across all departments</p>
+            </div>
+            <Link to="/hr/leave-requests" className="text-sm font-bold text-brand-600 hover:text-brand-700">
+              View all
+            </Link>
+          </div>
+          <div className="divide-y divide-ink-50 px-2">
+            {recentRequests.map((req) => {
+              const emp = getEmployeeById(req.employeeId)
+              return (
+                <div key={req.id} className="flex items-center gap-4 px-6 py-5 transition-colors hover:bg-ink-25 first:mt-2 last:mb-2 rounded-2xl">
+                  <Avatar initials={emp?.avatar || '??'} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-ink-900">{emp?.name || req.employeeId}</p>
+                    <div className="mt-1 flex items-center gap-3 text-xs text-ink-500">
+                      <span className="flex items-center gap-1"><CalIcon /> {req.leaveType}</span>
+                      <span>•</span>
+                      <span>{formatDate(req.fromDate)} – {formatDate(req.toDate)}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <StatusPill status={req.status} />
+                    <span className="text-[10px] font-medium text-ink-400">{req.days} days</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Breakdown Column */}
+        <div className="space-y-6">
+          <div className="rounded-[32px] border border-ink-100 bg-white p-8 shadow-panel">
+            <h3 className="text-lg font-bold text-ink-900">By Department</h3>
+            <p className="mt-1 mb-8 text-sm text-ink-500">Employee distribution</p>
+            <div className="space-y-6">
+              {[...new Set(employees.map((e) => e.department))].map((dept) => {
+                const count = employees.filter((e) => e.department === dept).length
+                const pct = Math.round((count / employees.length) * 100)
+                return (
+                  <div key={dept}>
+                    <div className="mb-2 flex justify-between text-xs">
+                      <span className="font-bold text-ink-700">{dept}</span>
+                      <span className="font-medium text-ink-400">{count} members</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-ink-100">
+                      <div className="h-2 rounded-full bg-brand-600 shadow-sm shadow-brand-100" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-[32px] border border-ink-100 bg-white p-8 shadow-panel">
+            <h3 className="text-lg font-bold text-ink-900">Request Summary</h3>
+            <p className="mt-1 mb-6 text-sm text-ink-500">All-time status</p>
+            <div className="space-y-3">
+              {[
+                { label: 'Approved', count: stats.approved, color: '#10B981', bg: '#F0FDF4' },
+                { label: 'Pending', count: stats.pending, color: '#F59E0B', bg: '#FFFBEB' },
+                { label: 'Rejected', count: stats.rejected, color: '#EF4444', bg: '#FEF2F2' },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between rounded-2xl px-4 py-3.5" style={{ backgroundColor: item.bg }}>
+                  <div className="flex items-center gap-3">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-sm font-bold text-ink-700">{item.label}</span>
+                  </div>
+                  <span className="text-sm font-black" style={{ color: item.color }}>{item.count}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 rounded-2xl bg-ink-25 p-5 text-center">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-ink-400">Total Processed</p>
+              <p className="mt-1 text-3xl font-black text-ink-900">{leaveRequests.length}</p>
+            </div>
           </div>
         </div>
       </div>

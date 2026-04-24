@@ -31,7 +31,7 @@ function BarChart({ data, label }) {
 }
 
 export default function Reports() {
-  const { leaveRequests, employees, leavePolicies } = useAppData()
+  const { leaveRequests } = useAppData()
 
   const stats = useMemo(() => {
     const total = leaveRequests.length
