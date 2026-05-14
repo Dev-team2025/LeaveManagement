@@ -62,7 +62,7 @@ function Sidebar({ isOpen, onClose }) {
       >
         <div className="mb-10 px-2 border-b border-ink-50 pb-6">
           <p className="font-display text-2xl font-black text-ink-900">LMS Portal</p>
-          <p className="mt-1 text-xs font-black uppercase tracking-widest text-brand-600 italic">Core Governance</p>
+          <p className="mt-1 text-xs font-black uppercase tracking-widest text-brand-600 italic">Leave Management System</p>
         </div>
 
         <nav className="space-y-1.5">
@@ -74,10 +74,9 @@ function Sidebar({ isOpen, onClose }) {
                 to={link.to}
                 onClick={onClose}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all duration-300 ${
-                    isActive 
-                      ? 'bg-brand-600 text-white shadow-lg shadow-brand-200 translate-x-1' 
-                      : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900'
+                  `flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all duration-300 ${isActive
+                    ? 'bg-brand-600 text-white shadow-lg shadow-brand-200 translate-x-1'
+                    : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900'
                   }`
                 }
               >
@@ -89,10 +88,10 @@ function Sidebar({ isOpen, onClose }) {
         </nav>
 
         <div className="absolute bottom-6 left-5 right-5">
-           <div className="rounded-3xl bg-ink-50 p-6 border border-ink-100">
-              <p className="text-[10px] font-black uppercase tracking-widest text-ink-400 mb-1">Authenticated As</p>
-              <p className="text-sm font-bold text-ink-900 truncate uppercase">{role}</p>
-           </div>
+          <div className="rounded-3xl bg-ink-50 p-6 border border-ink-100">
+            <p className="text-[10px] font-black uppercase tracking-widest text-ink-400 mb-1">Authenticated As</p>
+            <p className="text-sm font-bold text-ink-900 truncate uppercase">{role}</p>
+          </div>
         </div>
       </aside>
     </>

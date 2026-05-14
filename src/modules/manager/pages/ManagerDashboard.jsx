@@ -49,9 +49,9 @@ export default function ManagerDashboard() {
     return {
       teamSize: teamEmployees.length,
       pending: teamRequests.filter((r) => r.status === 'pending').length,
-      onLeaveToday: teamRequests.filter((r) => 
-        r.status === 'approved' && 
-        r.fromDate <= today && 
+      onLeaveToday: teamRequests.filter((r) =>
+        r.status === 'approved' &&
+        r.fromDate <= today &&
         r.toDate >= today
       ).length,
       upcoming: teamRequests.filter((r) => r.status === 'approved' && r.fromDate > today).length,
@@ -78,7 +78,7 @@ export default function ManagerDashboard() {
             Real-time insights and decision tools for managing your team's presence.
           </p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           {unreadCount > 0 && (
             <Link to="/manager/notifications" className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-ink-100 bg-white transition hover:bg-ink-50">
@@ -177,26 +177,26 @@ export default function ManagerDashboard() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-base font-black text-ink-900 tracking-tight leading-tight">{emp?.name}</p>
                         <div className="mt-1 flex items-center gap-2">
-                           <span className="text-[10px] font-black uppercase tracking-widest text-brand-600">{req.leaveType}</span>
-                           <span className="text-[10px] text-ink-200">•</span>
-                           <span className="text-[10px] font-black uppercase tracking-widest text-ink-400">{req.days} Days Requested</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-brand-600">{req.leaveType}</span>
+                          <span className="text-[10px] text-ink-200">•</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-ink-400">{req.days} Days Requested</span>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex-1 lg:max-w-[140px]">
-                       <p className="text-[10px] font-black uppercase tracking-widest text-ink-300 mb-1">Period</p>
-                       <p className="text-sm font-bold text-ink-700">{formatDate(req.fromDate)} — {formatDate(req.toDate)}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-ink-300 mb-1">Period</p>
+                      <p className="text-sm font-bold text-ink-700">{formatDate(req.fromDate)} — {formatDate(req.toDate)}</p>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <Link 
+                      <Link
                         to="/manager/team-leaves"
                         className="rounded-2xl border border-ink-100 bg-white px-5 py-3 text-[10px] font-black text-ink-900 transition hover:bg-ink-50 uppercase tracking-widest"
                       >
                         Details
                       </Link>
-                      <button 
+                      <button
                         onClick={() => approveLeave(req.id, 'Manager dashboard quick approve')}
                         className="rounded-2xl bg-brand-600 px-6 py-3 text-[10px] font-black text-white shadow-lg shadow-brand-100 transition hover:bg-brand-700 hover:scale-[1.03]"
                       >
@@ -221,7 +221,7 @@ export default function ManagerDashboard() {
                   (r) => r.employeeId === emp.id && r.status === 'approved' &&
                     r.fromDate <= today && r.toDate >= today,
                 )
-                
+
                 return (
                   <div key={emp.id} className="flex items-center gap-4">
                     <div className="relative">
@@ -231,8 +231,8 @@ export default function ManagerDashboard() {
                       <span className={`absolute -right-1.5 -bottom-1.5 h-4 w-4 rounded-full border-4 border-white ${activeLeave ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
                     </div>
                     <div className="min-w-0 flex-1">
-                       <p className="truncate text-sm font-bold text-ink-900 leading-tight">{emp.name}</p>
-                       <p className="text-[10px] font-black uppercase tracking-widest text-ink-400 mt-1">{emp.designation}</p>
+                      <p className="truncate text-sm font-bold text-ink-900 leading-tight">{emp.name}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-ink-400 mt-1">{emp.designation}</p>
                     </div>
                   </div>
                 )
@@ -240,30 +240,30 @@ export default function ManagerDashboard() {
             </div>
 
             <div className="mt-10 pt-8 border-t border-ink-50 relative z-10">
-               <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-ink-300">
-                  <span>Capacity Level</span>
-                  <span className="text-brand-600">{Math.round((teamEmployees.length - stats.onLeaveToday) / teamEmployees.length * 100)}% ACTIVE</span>
-               </div>
-               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-ink-50">
-                  <div 
-                    className="h-full bg-brand-600 rounded-full transition-all duration-1000 shadow-sm shadow-brand-100" 
-                    style={{ width: `${(teamEmployees.length - stats.onLeaveToday) / teamEmployees.length * 100}%` }}
-                  />
-               </div>
+              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-ink-300">
+                <span>Capacity Level</span>
+                <span className="text-brand-600">{Math.round((teamEmployees.length - stats.onLeaveToday) / teamEmployees.length * 100)}% ACTIVE</span>
+              </div>
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-ink-50">
+                <div
+                  className="h-full bg-brand-600 rounded-full transition-all duration-1000 shadow-sm shadow-brand-100"
+                  style={{ width: `${(teamEmployees.length - stats.onLeaveToday) / teamEmployees.length * 100}%` }}
+                />
+              </div>
             </div>
-            
+
             <div className="absolute right-0 top-0 h-32 w-32 bg-brand-50 rounded-full -translate-y-16 translate-x-16 blur-3xl opacity-50"></div>
           </div>
-          
+
           <div className="rounded-[40px] bg-brand-600 p-8 shadow-xl shadow-brand-100 text-white relative overflow-hidden group">
-             <div className="relative z-10">
-                <h3 className="text-lg font-black uppercase tracking-tight">Need a full view?</h3>
-                <p className="mt-1 text-sm font-medium text-brand-100 leading-relaxed">Access the interactive team calendar for visual planning.</p>
-                <Link to="/manager/team-calendar" className="mt-6 inline-flex h-11 items-center justify-center rounded-2xl bg-white px-6 text-xs font-black text-brand-600 uppercase tracking-widest transition group-hover:scale-105 active:scale-95">
-                  Launch Calendar
-                </Link>
-             </div>
-             <div className="absolute -right-4 -bottom-4 h-24 w-24 bg-white/10 rounded-3xl rotate-12 transition group-hover:rotate-45"></div>
+            <div className="relative z-10">
+              <h3 className="text-lg font-black uppercase tracking-tight">Need a full view?</h3>
+              <p className="mt-1 text-sm font-medium text-brand-100 leading-relaxed">Access the interactive team calendar for visual planning.</p>
+              <Link to="/manager/team-calendar" className="mt-6 inline-flex h-11 items-center justify-center rounded-2xl bg-white px-6 text-xs font-black !text-black uppercase tracking-widest transition group-hover:scale-105 active:scale-95">
+                Launch Calendar
+              </Link>
+            </div>
+            <div className="absolute -right-4 -bottom-4 h-24 w-24 bg-white/10 rounded-3xl rotate-12 transition group-hover:rotate-45"></div>
           </div>
         </div>
       </div>
