@@ -75,7 +75,7 @@ function Sidebar({ isOpen, onClose }) {
                 onClick={onClose}
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all duration-300 ${isActive
-                    ? 'bg-brand-600 text-white shadow-lg shadow-brand-200 translate-x-1'
+                    ? 'bg-brand-600 !text-white shadow-lg shadow-brand-200 translate-x-1'
                     : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900'
                   }`
                 }

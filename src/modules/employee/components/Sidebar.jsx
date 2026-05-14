@@ -109,7 +109,7 @@ function Sidebar({ isOpen, onClose }) {
                 onClick={onClose}
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                    isActive ? 'bg-brand-600 text-white' : 'text-ink-600 hover:bg-white hover:text-ink-900'
+                    isActive ? 'bg-brand-600 !text-white' : 'text-ink-600 hover:bg-white hover:text-ink-900'
                   }`
                 }
               >
