@@ -1,34 +1,25 @@
-import { API_ENDPOINTS, LEAVE_STATUS } from '@/utils/constants'
-
-const dashboardFallback = {
-  cards: [
-    { id: 'team-away', label: 'Team members away today', value: 4 },
-    { id: 'pending', label: 'Pending approvals', value: 6 },
-    { id: 'calendar', label: 'Upcoming overlaps', value: 2 },
-  ],
-}
-
-const teamLeavesFallback = [
-  { id: 'TM-301', employee: 'Neha Sharma', period: '21 Mar - 22 Mar', status: LEAVE_STATUS.PENDING },
-  { id: 'TM-302', employee: 'Ajay Singh', period: '25 Mar - 27 Mar', status: LEAVE_STATUS.APPROVED },
-]
+import { API_ENDPOINTS } from '@/utils/constants'
 
 export const managerService = {
   async getDashboard(axiosInstance) {
-    try {
-      const { data } = await axiosInstance.get(API_ENDPOINTS.MANAGER.DASHBOARD)
-      return data
-    } catch {
-      return dashboardFallback
-    }
+    const { data } = await axiosInstance.get(API_ENDPOINTS.MANAGER.DASHBOARD)
+    return data
   },
   async getTeamLeaves(axiosInstance) {
-    try {
-      const { data } = await axiosInstance.get(API_ENDPOINTS.MANAGER.TEAM_LEAVES)
-      return data
-    } catch {
-      return teamLeavesFallback
-    }
+    const { data } = await axiosInstance.get(API_ENDPOINTS.MANAGER.TEAM_LEAVES)
+    return data
+  },
+  async getPendingRequests(axiosInstance) {
+    const { data } = await axiosInstance.get('/manager/requests/pending')
+    return data
+  },
+  async approveRequest(axiosInstance, requestId) {
+    const { data } = await axiosInstance.post(`/manager/requests/${requestId}/approve`, {})
+    return data
+  },
+  async rejectRequest(axiosInstance, requestId, reason = '') {
+    const { data } = await axiosInstance.post(`/manager/requests/${requestId}/reject`, { reason })
+    return data
   },
 }
 

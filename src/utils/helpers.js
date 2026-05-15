@@ -37,3 +37,51 @@ export function truncate(value = '', maxLength = 32) {
 export function getRoleHome(role) {
   return ROLE_HOME[role] || '/login'
 }
+
+export function openAttachment(url, fileName = 'attachment') {
+  if (!url) return
+
+  // If it's a data URL, we need to handle it carefully to avoid browser blocks
+  if (url.startsWith('data:')) {
+    try {
+      const parts = url.split(',')
+      const mime = parts[0].match(/:(.*?);/)[1]
+      const b64Data = parts[1]
+      
+      const byteCharacters = atob(b64Data)
+      const byteArrays = []
+      
+      for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+        const slice = byteCharacters.slice(offset, offset + 512)
+        const byteNumbers = new Array(slice.length)
+        for (let i = 0; i < slice.length; i++) {
+          byteNumbers[i] = slice.charCodeAt(i)
+        }
+        const byteArray = new Uint8Array(byteNumbers)
+        byteArrays.push(byteArray)
+      }
+      
+      const blob = new Blob(byteArrays, { type: mime })
+      const blobUrl = URL.createObjectURL(blob)
+      
+      // Open in new tab
+      const win = window.open(blobUrl, '_blank')
+      if (win) {
+        win.focus()
+      } else {
+        // If popup blocked, fallback to download
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = fileName
+        link.click()
+      }
+    } catch (err) {
+      console.error('Error opening attachment:', err)
+      // Final fallback
+      window.open(url, '_blank')
+    }
+  } else {
+    // Normal URL
+    window.open(url, '_blank')
+  }
+}

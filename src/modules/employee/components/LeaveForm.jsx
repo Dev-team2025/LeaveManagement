@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import InputField from '@/modules/employee/components/InputField'
+import useAxios from '@/hooks/useAxios'
 import employeeService from '@/modules/employee/services/employeeService'
 
 const initialValues = {
@@ -10,20 +11,22 @@ const initialValues = {
 }
 
 function LeaveForm() {
+  const axiosInstance = useAxios()
   const [values, setValues] = useState(initialValues)
+  const [attachment, setAttachment] = useState(null)
   const [errors, setErrors] = useState({})
   const [leaveTypes, setLeaveTypes] = useState([])
   const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
     const loadLeaveTypes = async () => {
-      const response = await employeeService.getLeaveTypes()
+      const response = await employeeService.getLeaveTypes(axiosInstance)
       setLeaveTypes(response.length > 0 ? response : ['Casual Leave', 'Sick Leave', 'Earned Leave'])
       setValues((current) => ({ ...current, leaveType: response[0] || 'Casual Leave' }))
     }
 
     loadLeaveTypes()
-  }, [])
+  }, [axiosInstance])
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -31,13 +34,43 @@ function LeaveForm() {
     setErrors((current) => ({ ...current, [name]: '' }))
   }
 
+  const handleFileChange = (event) => {
+    const file = event.target.files[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors((prev) => ({ ...prev, attachment: 'File size must be less than 5MB.' }))
+        return
+      }
+      
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setAttachment({
+          name: file.name,
+          data: reader.result // base64 string
+        })
+        setErrors((prev) => ({ ...prev, attachment: '' }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const daysRequested = useMemo(() => {
     if (!values.fromDate || !values.toDate) return 0
     const start = new Date(values.fromDate)
     const end = new Date(values.toDate)
-    const diffTime = Math.abs(end - start)
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
-    return diffDays > 0 ? diffDays : 0
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0
+    
+    let count = 0
+    const curDate = new Date(start.getTime())
+    while (curDate <= end) {
+      const dayOfWeek = curDate.getUTCDay()
+      // 0 = Sunday, 6 = Saturday
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        count++
+      }
+      curDate.setUTCDate(curDate.getUTCDate() + 1)
+    }
+    return count
   }, [values.fromDate, values.toDate])
 
   const validate = () => {
@@ -63,12 +96,27 @@ function LeaveForm() {
       return
     }
 
-    const response = await employeeService.submitLeave(values)
-    setSuccessMessage(response.message)
+    try {
+      const payload = {
+        ...values,
+        attachmentUrl: attachment?.data || null,
+        attachmentName: attachment?.name || null,
+      }
+      const response = await employeeService.submitLeave(axiosInstance, payload)
+      setSuccessMessage(response.message || 'Leave request submitted successfully.')
+    } catch (submitError) {
+      setSuccessMessage('')
+      setErrors((current) => ({
+        ...current,
+        form: submitError.response?.data?.message || 'Unable to submit leave request.',
+      }))
+      return
+    }
     setValues((current) => ({
       ...initialValues,
       leaveType: leaveTypes[0] || current.leaveType,
     }))
+    setAttachment(null)
     setErrors({})
   }
 
@@ -130,13 +178,30 @@ function LeaveForm() {
             {/* Attachment Section */}
             <div className="space-y-2">
               <span className="text-sm font-medium text-ink-900">Attachment (Optional)</span>
-              <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-ink-200 bg-ink-25 p-10 transition hover:border-brand-300">
-                <svg className="h-10 w-10 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+              <label className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-10 transition cursor-pointer ${
+                attachment ? 'border-brand-500 bg-brand-50' : 'border-ink-200 bg-ink-25 hover:border-brand-300'
+              }`}>
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                />
+                <svg className={`h-10 w-10 ${attachment ? 'text-brand-600' : 'text-ink-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {attachment ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                  )}
                 </svg>
-                <p className="mt-4 text-sm font-medium text-ink-900">Click to upload or drag and drop</p>
+                <p className="mt-4 text-sm font-medium text-ink-900">
+                  {attachment ? `Selected: ${attachment.name}` : 'Click to upload or drag and drop'}
+                </p>
                 <p className="mt-1 text-xs text-ink-500">PDF, JPG, PNG up to 5MB (Medical certificate, documents)</p>
-              </div>
+              </label>
+              {errors.attachment && (
+                <p className="mt-1 text-xs text-red-500 font-medium">{errors.attachment}</p>
+              )}
             </div>
 
             {/* Potential Conflict Alert */}
@@ -170,6 +235,11 @@ function LeaveForm() {
           {successMessage ? (
             <div className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
               {successMessage}
+            </div>
+          ) : null}
+          {errors.form ? (
+            <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-danger-500">
+              {errors.form}
             </div>
           ) : null}
         </form>

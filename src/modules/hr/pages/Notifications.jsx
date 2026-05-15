@@ -1,12 +1,14 @@
-import { useAppData } from '@/context/AppDataContext'
+import { useState, useEffect, useCallback } from 'react'
 import useAuth from '@/hooks/useAuth'
+import authService from '@/services/authService'
+import { Loader } from '@/components/common'
 
 const NOTIF_ICONS = {
-  leave_approved: { icon: '✅', bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  leave_rejected: { icon: '❌', bg: 'bg-red-50', text: 'text-red-700' },
-  leave_pending:  { icon: '⏳', bg: 'bg-amber-50',  text: 'text-amber-700'  },
-  leave_applied:  { icon: '📋', bg: 'bg-blue-50',   text: 'text-blue-700'   },
-  policy_reminder:{ icon: '📢', bg: 'bg-purple-50', text: 'text-purple-700' },
+  success: { icon: '✅', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  danger:  { icon: '❌', bg: 'bg-red-50', text: 'text-red-700' },
+  warning: { icon: '⏳', bg: 'bg-amber-50',  text: 'text-amber-700'  },
+  info:    { icon: '📋', bg: 'bg-blue-50',   text: 'text-blue-700'   },
+  policy:  { icon: '📢', bg: 'bg-purple-50', text: 'text-purple-700' },
 }
 
 function timeAgo(dateStr) {
@@ -19,15 +21,54 @@ function timeAgo(dateStr) {
 }
 
 export default function Notifications() {
-  const { notifications, markNotificationRead, markAllNotificationsRead } = useAppData()
   const { user } = useAuth()
-  const myId = user?.id || 'EMP004'
+  const [notifications, setNotifications] = useState([])
+  const [isLoading, setLoading] = useState(true)
 
-  const myNotifications = notifications
-    .filter((n) => n.recipientId === myId)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  const loadNotifications = useCallback(async (isMounted = true) => {
+    try {
+      const response = await authService.getNotifications()
+      if (isMounted) {
+        setNotifications(response)
+      }
+    } catch (err) {
+      console.error('Failed to load notifications:', err)
+    } finally {
+      if (isMounted) setLoading(false)
+    }
+  }, [])
 
-  const unreadCount = myNotifications.filter((n) => !n.isRead).length
+  useEffect(() => {
+    let mounted = true
+    loadNotifications(mounted)
+    return () => {
+      mounted = false
+    }
+  }, [loadNotifications])
+
+  async function markRead(id) {
+    try {
+      await authService.markNotificationRead(id)
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
+    } catch (err) {
+      console.error('Failed to mark as read:', err)
+    }
+  }
+
+  async function markAllRead() {
+    try {
+      await authService.markAllNotificationsRead()
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+    } catch (err) {
+      console.error('Failed to mark all as read:', err)
+    }
+  }
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length
+
+  if (isLoading) {
+    return <Loader label="Loading notifications" />
+  }
 
   return (
     <section className="space-y-6">
@@ -41,7 +82,7 @@ export default function Notifications() {
         </div>
         {unreadCount > 0 && (
           <button
-            onClick={() => markAllNotificationsRead(myId)}
+            onClick={markAllRead}
             className="shrink-0 rounded-xl border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-medium text-[#64748B] hover:bg-[#F8F9FC] transition"
           >
             Mark all read
@@ -50,19 +91,19 @@ export default function Notifications() {
       </div>
 
       <div className="space-y-2">
-        {myNotifications.length === 0 ? (
+        {notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-[20px] border border-[#E5E7EB] bg-white px-6 py-16 text-center">
             <span className="text-4xl">🔔</span>
             <p className="mt-4 font-semibold text-[#0F172A]">No notifications</p>
             <p className="mt-1 text-sm text-[#94A3B8]">You're all caught up!</p>
           </div>
         ) : (
-          myNotifications.map((notif) => {
-            const style = NOTIF_ICONS[notif.type] || NOTIF_ICONS.leave_applied
+          notifications.map((notif) => {
+            const style = NOTIF_ICONS[notif.type] || NOTIF_ICONS.info
             return (
               <div
                 key={notif.id}
-                onClick={() => markNotificationRead(notif.id)}
+                onClick={() => !notif.isRead && markRead(notif.id)}
                 className={`flex cursor-pointer items-start gap-4 rounded-[16px] border p-4 transition hover:bg-[#FAFAFA] ${
                   notif.isRead
                     ? 'border-[#E5E7EB] bg-white'

@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
-import { useAppData } from '@/context/AppDataContext'
-import { Badge, Modal } from '@/components/common'
+import { Badge, Modal, Loader } from '@/components/common'
 import useAuth from '@/hooks/useAuth'
-import { getEmployeeById } from '@/data/mockData'
+import useManagerLeaves from '@/modules/manager/hooks/useManagerLeaves'
+import useAxios from '@/hooks/useAxios'
+import managerService from '@/modules/manager/services/managerService'
+import { openAttachment } from '@/utils/helpers'
 
 const FILTERS = [
   { id: 'all', label: 'All Requests', color: 'ink' },
@@ -11,45 +13,63 @@ const FILTERS = [
   { id: 'rejected', label: 'Rejected', color: 'red' },
 ]
 
+function getInitials(name) {
+  if (!name) return '??'
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
 export default function TeamLeaves() {
-  const { leaveRequests, employees, approveLeave, rejectLeave } = useAppData()
+  const { teamLeaves: leaveRequests, isLoading, refresh } = useManagerLeaves()
+  const axiosInstance = useAxios()
   const { user } = useAuth()
-  const managerId = user?.id || 'EMP003'
   const [activeFilter, setActiveFilter] = useState('all')
   const [selectedRequest, setSelectedRequest] = useState(null)
   const [note, setNote] = useState('')
-
-  const teamIds = useMemo(
-    () => employees.filter((e) => e.managerId === managerId).map((e) => e.id),
-    [employees, managerId],
-  )
+  const [isProcessing, setProcessing] = useState(false)
 
   const filteredRequests = useMemo(
     () =>
       leaveRequests
-        .filter((r) => teamIds.includes(r.employeeId))
-        .filter((r) => activeFilter === 'all' || r.status === activeFilter)
-        .sort((a, b) => new Date(b.appliedOn) - new Date(a.appliedOn)),
-    [leaveRequests, teamIds, activeFilter],
+        .filter((r) => activeFilter === 'all' || r.status.toLowerCase() === activeFilter)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+    [leaveRequests, activeFilter],
   )
 
   const counts = useMemo(() => {
-    const team = leaveRequests.filter((r) => teamIds.includes(r.employeeId))
     return {
-      all: team.length,
-      pending: team.filter((r) => r.status === 'pending').length,
-      approved: team.filter((r) => r.status === 'approved').length,
-      rejected: team.filter((r) => r.status === 'rejected').length,
+      all: leaveRequests.length,
+      pending: leaveRequests.filter((r) => r.status.toLowerCase() === 'pending').length,
+      approved: leaveRequests.filter((r) => r.status.toLowerCase() === 'approved').length,
+      rejected: leaveRequests.filter((r) => r.status.toLowerCase() === 'rejected').length,
     }
-  }, [leaveRequests, teamIds])
+  }, [leaveRequests])
 
-  function handleAction(action) {
-    if (!selectedRequest) return
-    if (action === 'approve') approveLeave(selectedRequest.id, note)
-    else rejectLeave(selectedRequest.id, note)
-    setSelectedRequest(null)
-    setNote('')
+  async function handleAction(action) {
+    if (!selectedRequest || isProcessing) return
+    setProcessing(true)
+    try {
+      if (action === 'approve') {
+        await managerService.approveRequest(axiosInstance, selectedRequest.id)
+      } else {
+        await managerService.rejectRequest(axiosInstance, selectedRequest.id, note)
+      }
+      await refresh()
+      setSelectedRequest(null)
+      setNote('')
+    } catch (err) {
+      console.error('Failed to process request:', err)
+      alert('Failed to process request. Please try again.')
+    } finally {
+      setProcessing(false)
+    }
   }
+
+  if (isLoading) return <div className="flex h-96 items-center justify-center"><Loader /></div>
 
   return (
     <section className="space-y-8 pb-20">
@@ -106,17 +126,32 @@ export default function TeamLeaves() {
               </tr>
             ) : (
               filteredRequests.map((req) => {
-                const emp = getEmployeeById(req.employeeId)
                 return (
                   <tr key={req.id} className="group transition-colors hover:bg-ink-25/30">
                     <td className="px-8 py-7">
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-brand-50 text-brand-600 font-black text-xs ring-2 ring-white shadow-sm border border-brand-100">
-                          {emp?.avatar || '??'}
+                          {getInitials(req.employee)}
                         </div>
-                        <div>
-                          <p className="font-black text-ink-900 leading-tight tracking-tight">{emp?.name}</p>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-ink-400 mt-1">{emp?.designation}</p>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <p className="font-black text-ink-900 leading-tight tracking-tight">{req.employee}</p>
+                            {req.attachmentUrl && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  openAttachment(req.attachmentUrl, req.attachmentName)
+                                }}
+                                className="flex h-5 w-5 items-center justify-center rounded-md bg-brand-50 text-brand-600 transition hover:bg-brand-100"
+                                title="View Attachment"
+                              >
+                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-ink-400 mt-1">{req.designation}</p>
                         </div>
                       </div>
                     </td>
@@ -125,16 +160,18 @@ export default function TeamLeaves() {
                     </td>
                     <td className="px-8 py-7">
                        <p className="text-sm font-black text-ink-900 leading-tight">{req.days} Business Days</p>
-                       <p className="text-[10px] font-bold text-ink-400 mt-1 uppercase tracking-wider">{new Date(req.fromDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} — {new Date(req.toDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</p>
+                       <p className="text-[10px] font-bold text-ink-400 mt-1 uppercase tracking-wider">
+                         {new Date(req.fromDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })} — {new Date(req.toDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                       </p>
                     </td>
                     <td className="px-8 py-7 text-xs font-bold text-ink-500 italic">
-                       {new Date(req.appliedOn).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                       {new Date(req.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </td>
                     <td className="px-8 py-7">
                        <Badge status={req.status} className="!text-[10px] !px-3 !py-1 !font-black !tracking-widest !uppercase" />
                     </td>
                     <td className="px-8 py-7">
-                       {req.status === 'pending' ? (
+                       {req.status.toLowerCase() === 'pending' ? (
                          <button 
                            onClick={() => setSelectedRequest(req)}
                            className="group/btn inline-flex items-center gap-2 rounded-2xl bg-black px-5 py-3 text-[10px] font-black text-white shadow-xl shadow-black/10 transition hover:bg-brand-600 hover:scale-105 active:scale-95"
@@ -144,7 +181,7 @@ export default function TeamLeaves() {
                        ) : (
                          <div className="flex flex-col">
                             <span className="text-[10px] font-black uppercase tracking-widest text-ink-300">Reviewed On</span>
-                            <span className="text-xs font-bold text-ink-700">{new Date(req.reviewedOn).toLocaleDateString()}</span>
+                            <span className="text-xs font-bold text-ink-700">{req.decidedAt ? new Date(req.decidedAt).toLocaleDateString() : '—'}</span>
                          </div>
                        )}
                     </td>
@@ -160,16 +197,16 @@ export default function TeamLeaves() {
       {selectedRequest && (
         <Modal 
           isOpen={true} 
-          onClose={() => setSelectedRequest(null)} 
+          onClose={() => !isProcessing && setSelectedRequest(null)} 
           title="Authorisation Intelligence"
         >
           <div className="space-y-8 py-6 px-1">
             <div className="flex items-center gap-6 rounded-[32px] bg-brand-50/50 p-6 border border-brand-100 shadow-sm">
                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[28px] bg-brand-600 text-xl font-black text-white shadow-xl shadow-brand-100">
-                  {getEmployeeById(selectedRequest.employeeId)?.avatar}
+                  {getInitials(selectedRequest.employee)}
                </div>
                <div className="min-w-0">
-                  <p className="text-xl font-black text-ink-900 tracking-tight leading-tight">{getEmployeeById(selectedRequest.employeeId)?.name}</p>
+                  <p className="text-xl font-black text-ink-900 tracking-tight leading-tight">{selectedRequest.employee}</p>
                   <div className="mt-1 flex items-center gap-2">
                      <span className="text-[10px] font-black uppercase tracking-widest text-brand-600">{selectedRequest.leaveType} APPLICATION</span>
                   </div>
@@ -195,6 +232,20 @@ export default function TeamLeaves() {
                      <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><path d="M14.017 21L14.017 18C14.017 16.8954 14.9124 16 16.017 16H19.017C19.5693 16 20.017 15.5523 20.017 15V9C20.017 8.44772 19.5693 8 19.017 8H14.017C13.4647 8 13.017 8.44772 13.017 9V15C13.017 15.5523 12.5693 16 12.017 16H11.017C10.4647 16 10.017 16.4477 10.017 17V21M10.017 21H4.017C3.46472 21 3.017 20.5523 3.017 20V14C3.017 13.4477 3.46472 13 4.017 13H9.017C9.56929 13 10.017 12.5523 10.017 12V6M10.017 6V12"></path></svg>
                   </div>
                </div>
+               {selectedRequest.attachmentUrl && (
+                  <div className="mt-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-ink-300 ml-1 mb-2">Attached Document</p>
+                    <button
+                      onClick={() => openAttachment(selectedRequest.attachmentUrl, selectedRequest.attachmentName)}
+                      className="flex items-center gap-2 rounded-2xl border border-brand-100 bg-brand-50 px-5 py-3 text-[10px] font-black text-brand-700 transition hover:bg-brand-100"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                      </svg>
+                      {selectedRequest.attachmentName || 'VIEW ATTACHMENT'}
+                    </button>
+                  </div>
+                )}
             </div>
 
             <div className="space-y-3 px-2">
@@ -203,22 +254,26 @@ export default function TeamLeaves() {
                  rows={3} 
                  value={note} 
                  onChange={(e) => setNote(e.target.value)} 
+                 disabled={isProcessing}
                  placeholder="Provide decision context or work coverage instructions..." 
-                 className="w-full rounded-[24px] bg-white px-6 py-4 text-sm font-bold text-ink-900 outline-none ring-2 ring-transparent transition focus:ring-brand-500/20 shadow-sm border border-ink-100 placeholder:text-ink-300" 
+                 className="w-full rounded-[24px] bg-white px-6 py-4 text-sm font-bold text-ink-900 outline-none ring-2 ring-transparent transition focus:ring-brand-500/20 shadow-sm border border-ink-100 placeholder:text-ink-300 disabled:opacity-50" 
                />
             </div>
 
             <div className="flex gap-4">
                <button 
                  onClick={() => handleAction('reject')}
-                 className="flex-1 rounded-2xl border border-red-100 bg-white py-4 text-[10px] font-black text-red-600 uppercase tracking-widest transition hover:bg-red-50"
+                 disabled={isProcessing}
+                 className="flex-1 rounded-2xl border border-red-100 bg-white py-4 text-[10px] font-black text-red-600 uppercase tracking-widest transition hover:bg-red-50 disabled:opacity-50"
                >
                  Decline Request
                </button>
                <button 
                  onClick={() => handleAction('approve')}
-                 className="flex-1 rounded-2xl bg-brand-600 py-4 text-[10px] font-black text-white uppercase tracking-widest shadow-xl shadow-brand-100 transition hover:bg-brand-700 hover:scale-[1.02]"
+                 disabled={isProcessing}
+                 className="flex-1 rounded-2xl bg-brand-600 py-4 text-[10px] font-black text-white uppercase tracking-widest shadow-xl shadow-brand-100 transition hover:bg-brand-700 hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2"
                >
+                 {isProcessing && <Loader size="sm" color="white" />}
                  Confirm Approval
                </button>
             </div>

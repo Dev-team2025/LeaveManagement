@@ -48,6 +48,21 @@ export const authService = {
     const { data } = await api.get(API_ENDPOINTS.AUTH.PROFILE)
     return data
   },
+
+  async getNotifications() {
+    const { data } = await api.get('/auth/notifications')
+    return data
+  },
+
+  async markNotificationRead(id) {
+    const { data } = await api.post(`/auth/notifications/${id}/read`)
+    return data
+  },
+
+  async markAllNotificationsRead() {
+    const { data } = await api.post('/auth/notifications/read-all')
+    return data
+  },
 }
 
 export default authService

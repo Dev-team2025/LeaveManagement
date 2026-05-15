@@ -7,26 +7,23 @@ export function useManagerLeaves() {
   const [teamLeaves, setTeamLeaves] = useState([])
   const [isLoading, setLoading] = useState(true)
 
-  useEffect(() => {
-    let isMounted = true
-
-    const loadTeamLeaves = async () => {
+  const loadTeamLeaves = async () => {
+    setLoading(true)
+    try {
       const response = await managerService.getTeamLeaves(axiosInstance)
-
-      if (isMounted) {
-        setTeamLeaves(response)
-        setLoading(false)
-      }
+      setTeamLeaves(response)
+    } catch (err) {
+      console.error('Failed to load team leaves:', err)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     loadTeamLeaves()
-
-    return () => {
-      isMounted = false
-    }
   }, [axiosInstance])
 
-  return { teamLeaves, isLoading }
+  return { teamLeaves, isLoading, refresh: loadTeamLeaves }
 }
 
 export default useManagerLeaves

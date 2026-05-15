@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
-import { useAppData } from '@/context/AppDataContext'
-import { getEmployeeById } from '@/data/mockData'
+import { useMemo, useState, useEffect, useCallback } from 'react'
+import useAxios from '@/hooks/useAxios'
+import hrService from '@/modules/hr/services/hrService'
+import { Loader } from '@/components/common'
 
 function formatDate(d) {
   if (!d) return '—'
@@ -31,7 +32,35 @@ function BarChart({ data, label }) {
 }
 
 export default function Reports() {
-  const { leaveRequests } = useAppData()
+  const axiosInstance = useAxios()
+  const [leaveRequests, setLeaveRequests] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [isLoading, setLoading] = useState(true)
+
+  const loadData = useCallback(async (isMounted = true) => {
+    try {
+      const [requests, emps] = await Promise.all([
+        hrService.getLeaveRequests(axiosInstance),
+        hrService.getEmployees(axiosInstance),
+      ])
+      if (isMounted) {
+        setLeaveRequests(requests)
+        setEmployees(emps)
+      }
+    } catch (err) {
+      console.error('Failed to load reports data:', err)
+    } finally {
+      if (isMounted) setLoading(false)
+    }
+  }, [axiosInstance])
+
+  useEffect(() => {
+    let mounted = true
+    loadData(mounted)
+    return () => {
+      mounted = false
+    }
+  }, [loadData])
 
   const stats = useMemo(() => {
     const total = leaveRequests.length
@@ -48,7 +77,7 @@ export default function Reports() {
     const map = {}
     leaveRequests.forEach((r) => {
       if (r.status === 'approved') {
-        map[r.leaveType] = (map[r.leaveType] || 0) + r.days
+        map[r.type] = (map[r.type] || 0) + r.days
       }
     })
     const colors = { 'Annual Leave': '#2563EB', 'Sick Leave': '#DC2626', 'Casual Leave': '#D97706', 'Work From Home': '#7C3AED', 'Maternity Leave': '#DB2777' }
@@ -59,8 +88,8 @@ export default function Reports() {
     const map = {}
     leaveRequests.forEach((r) => {
       if (r.status === 'approved') {
-        const emp = getEmployeeById(r.employeeId)
-        if (emp) map[emp.department] = (map[emp.department] || 0) + r.days
+        const dept = r.department
+        if (dept) map[dept] = (map[dept] || 0) + r.days
       }
     })
     const deptColors = { Engineering: '#1D4ED8', Design: '#7C3AED', Marketing: '#D97706', Finance: '#059669', 'Human Resources': '#DB2777', IT: '#0891B2' }
@@ -70,18 +99,25 @@ export default function Reports() {
   const topEmployees = useMemo(() => {
     const map = {}
     leaveRequests.filter((r) => r.status === 'approved').forEach((r) => {
-      map[r.employeeId] = (map[r.employeeId] || 0) + r.days
+      map[r.employee] = { 
+        days: (map[r.employee]?.days || 0) + r.days,
+        department: r.department
+      }
     })
     return Object.entries(map)
-      .sort((a, b) => b[1] - a[1])
+      .sort((a, b) => b[1].days - a[1].days)
       .slice(0, 5)
-      .map(([id, days]) => ({ ...getEmployeeById(id), days }))
+      .map(([name, data]) => ({ name, days: data.days, department: data.department }))
   }, [leaveRequests])
 
   const recentApproved = useMemo(
-    () => leaveRequests.filter((r) => r.status === 'approved').sort((a, b) => new Date(b.reviewedOn) - new Date(a.reviewedOn)).slice(0, 5),
+    () => leaveRequests.filter((r) => r.status === 'approved').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5),
     [leaveRequests],
   )
+
+  if (isLoading) {
+    return <Loader label="Loading analytics" />
+  }
 
   return (
     <section className="space-y-6">
@@ -123,10 +159,10 @@ export default function Reports() {
           <p className="mb-4 font-semibold text-[#0F172A]">Top Leave Takers</p>
           <div className="space-y-3">
             {topEmployees.map((emp, i) => (
-              <div key={emp?.id || i} className="flex items-center gap-3">
+              <div key={emp?.name || i} className="flex items-center gap-3">
                 <span className="w-5 shrink-0 text-xs font-bold text-[#94A3B8]">#{i + 1}</span>
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EFF6FF] text-xs font-semibold text-[#1D4ED8]">
-                  {emp?.avatar || '?'}
+                  {emp?.name?.[0]?.toUpperCase() || '?'}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-[#0F172A]">{emp?.name || 'Unknown'}</p>
@@ -143,17 +179,16 @@ export default function Reports() {
           <p className="mb-4 font-semibold text-[#0F172A]">Recently Approved</p>
           <div className="space-y-3">
             {recentApproved.map((req) => {
-              const emp = getEmployeeById(req.employeeId)
               return (
                 <div key={req.id} className="flex items-center gap-3 rounded-xl bg-[#F8F9FC] p-3">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EFF6FF] text-xs font-semibold text-[#1D4ED8]">
-                    {emp?.avatar || '?'}
+                    {req.employee?.[0]?.toUpperCase() || '?'}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-[#0F172A]">{emp?.name}</p>
-                    <p className="text-xs text-[#94A3B8]">{req.leaveType} · {req.days}d</p>
+                    <p className="truncate text-sm font-medium text-[#0F172A]">{req.employee}</p>
+                    <p className="text-xs text-[#94A3B8]">{req.type} · {req.days}d</p>
                   </div>
-                  <span className="shrink-0 text-xs text-[#94A3B8]">{formatDate(req.reviewedOn)}</span>
+                  <span className="shrink-0 text-xs text-[#94A3B8]">{formatDate(req.decidedAt || req.createdAt)}</span>
                 </div>
               )
             })}

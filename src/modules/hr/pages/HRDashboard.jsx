@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { useAppData } from '@/context/AppDataContext'
 import useAuth from '@/hooks/useAuth'
-import { getEmployeeById } from '@/data/mockData'
+import useAxios from '@/hooks/useAxios'
+import hrService from '@/modules/hr/services/hrService'
+import { openAttachment } from '@/utils/helpers'
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 function UsersIcon() {
@@ -73,26 +74,60 @@ function Avatar({ initials, size = 'sm' }) {
 }
 
 export default function HRDashboard() {
-  const { leaveRequests, employees, notifications } = useAppData()
+  const axiosInstance = useAxios()
+  const [leaveRequests, setLeaveRequests] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [notifications, setNotifications] = useState([])
+  const [isLoading, setLoading] = useState(true)
   const { user } = useAuth()
+
+  const loadData = useCallback(async (isMounted = true) => {
+    try {
+      const [requests, emps] = await Promise.all([
+        hrService.getLeaveRequests(axiosInstance),
+        hrService.getEmployees(axiosInstance),
+      ])
+      if (isMounted) {
+        setLeaveRequests(requests)
+        setEmployees(emps)
+      }
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err)
+    } finally {
+      if (isMounted) setLoading(false)
+    }
+  }, [axiosInstance])
+
+  useEffect(() => {
+    let mounted = true
+    loadData(mounted)
+    return () => {
+      mounted = false
+    }
+  }, [loadData])
 
   const stats = useMemo(() => {
     const pending = leaveRequests.filter((r) => r.status === 'pending').length
     const approved = leaveRequests.filter((r) => r.status === 'approved').length
     const rejected = leaveRequests.filter((r) => r.status === 'rejected').length
-    const totalEmp = employees.filter((e) => e.status === 'active').length
+    const totalEmp = employees.length
     return { pending, approved, rejected, totalEmp }
   }, [leaveRequests, employees])
 
   const recentRequests = useMemo(
-    () => [...leaveRequests].sort((a, b) => new Date(b.appliedOn) - new Date(a.appliedOn)).slice(0, 6),
+    () => [...leaveRequests].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 6),
     [leaveRequests],
   )
 
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => n.recipientId === (user?.id || 'EMP004') && !n.isRead).length,
-    [notifications, user],
-  )
+  const unreadCount = 0 // Temporarily set to 0 until notification service is ready
+
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" />
+      </div>
+    )
+  }
 
   return (
     <section className="space-y-8">
@@ -103,14 +138,6 @@ export default function HRDashboard() {
           <p className="mt-1 text-sm text-ink-500">Real-time overview of leave activity and workforce distribution</p>
         </div>
         <div className="flex items-center gap-3">
-          {unreadCount > 0 && (
-            <Link to="/hr/notifications" className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-ink-100 bg-white transition hover:bg-ink-50">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-600">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white ring-4 ring-white">{unreadCount}</span>
-            </Link>
-          )}
           <Link to="/hr/leave-requests" className="inline-flex h-11 items-center gap-2 rounded-2xl bg-brand-600 px-5 text-sm font-semibold text-white shadow-lg shadow-brand-200 transition hover:bg-brand-700">
             View All Requests
           </Link>
@@ -124,7 +151,6 @@ export default function HRDashboard() {
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
               <UsersIcon />
             </div>
-            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">+2 this month</span>
           </div>
           <div className="mt-5">
             <p className="text-sm font-medium text-ink-500">Active Employees</p>
@@ -152,7 +178,7 @@ export default function HRDashboard() {
             <CheckCircleIcon />
           </div>
           <div className="mt-5">
-            <p className="text-sm font-medium text-ink-500">Approved (Month)</p>
+            <p className="text-sm font-medium text-ink-500">Approved (All time)</p>
             <h3 className="mt-1 text-3xl font-bold text-ink-900">{stats.approved}</h3>
           </div>
         </div>
@@ -182,14 +208,30 @@ export default function HRDashboard() {
           </div>
           <div className="divide-y divide-ink-50 px-2">
             {recentRequests.map((req) => {
-              const emp = getEmployeeById(req.employeeId)
+              const initials = String(req.employee || '??').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
               return (
                 <div key={req.id} className="flex items-center gap-4 px-6 py-5 transition-colors hover:bg-ink-25 first:mt-2 last:mb-2 rounded-2xl">
-                  <Avatar initials={emp?.avatar || '??'} />
+                  <Avatar initials={initials} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-ink-900">{emp?.name || req.employeeId}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-bold text-ink-900">{req.employee}</p>
+                      {req.attachmentUrl && (
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            openAttachment(req.attachmentUrl, req.attachmentName);
+                          }}
+                          className="hover:text-brand-600 transition-colors"
+                          title="View Attachment"
+                        >
+                          <svg className="h-3 w-3 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                     <div className="mt-1 flex items-center gap-3 text-xs text-ink-500">
-                      <span className="flex items-center gap-1"><CalIcon /> {req.leaveType}</span>
+                      <span className="flex items-center gap-1"><CalIcon /> {req.type}</span>
                       <span>•</span>
                       <span>{formatDate(req.fromDate)} – {formatDate(req.toDate)}</span>
                     </div>
@@ -210,7 +252,7 @@ export default function HRDashboard() {
             <h3 className="text-lg font-bold text-ink-900">By Department</h3>
             <p className="mt-1 mb-8 text-sm text-ink-500">Employee distribution</p>
             <div className="space-y-6">
-              {[...new Set(employees.map((e) => e.department))].map((dept) => {
+              {[...new Set(employees.map((e) => e.department))].filter(Boolean).map((dept) => {
                 const count = employees.filter((e) => e.department === dept).length
                 const pct = Math.round((count / employees.length) * 100)
                 return (

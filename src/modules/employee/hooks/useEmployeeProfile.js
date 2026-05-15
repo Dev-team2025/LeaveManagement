@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import useAxios from '@/hooks/useAxios'
 import employeeService from '@/modules/employee/services/employeeService'
 
 export function useEmployeeProfile() {
+  const axiosInstance = useAxios()
   const [profile, setProfile] = useState(null)
   const [isLoading, setLoading] = useState(true)
 
@@ -9,7 +11,7 @@ export function useEmployeeProfile() {
     let isMounted = true
 
     const loadProfile = async () => {
-      const response = await employeeService.getProfile()
+      const response = await employeeService.getProfile(axiosInstance)
 
       if (isMounted) {
         setProfile(response)
@@ -22,7 +24,7 @@ export function useEmployeeProfile() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [axiosInstance])
 
   return { profile, isLoading }
 }

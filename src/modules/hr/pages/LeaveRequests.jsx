@@ -1,11 +1,23 @@
 import { useState, useMemo } from 'react'
-import { useAppData } from '@/context/AppDataContext'
-import { Badge, Modal } from '@/components/common'
-import { getEmployeeById } from '@/data/mockData'
+import { Badge, Modal, Loader } from '@/components/common'
+import useHRLeaves from '@/modules/hr/hooks/useHRLeaves'
+import useAxios from '@/hooks/useAxios'
+import hrService from '@/modules/hr/services/hrService'
+import { openAttachment } from '@/utils/helpers'
 
 function formatDate(d) {
   if (!d) return '—'
   return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function getInitials(name) {
+  if (!name) return '??'
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
 }
 
 function Avatar({ initials, size = 'sm' }) {
@@ -20,31 +32,32 @@ function Avatar({ initials, size = 'sm' }) {
 const FILTERS = ['all', 'pending', 'approved', 'rejected']
 
 export default function LeaveRequests() {
-  const { leaveRequests, approveLeave, rejectLeave } = useAppData()
+  const { requests: leaveRequests, isLoading, refresh } = useHRLeaves()
+  const axiosInstance = useAxios()
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [reviewModal, setReviewModal] = useState(null) // { request, action }
   const [noteText, setNoteText] = useState('')
+  const [isProcessing, setProcessing] = useState(false)
 
   const filtered = useMemo(() => {
     return leaveRequests
-      .filter((r) => filter === 'all' || r.status === filter)
+      .filter((r) => filter === 'all' || r.status.toLowerCase() === filter)
       .filter((r) => {
         if (!search) return true
-        const emp = getEmployeeById(r.employeeId)
         return (
-          emp?.name.toLowerCase().includes(search.toLowerCase()) ||
-          r.leaveType.toLowerCase().includes(search.toLowerCase())
+          r.employee.toLowerCase().includes(search.toLowerCase()) ||
+          r.type.toLowerCase().includes(search.toLowerCase())
         )
       })
-      .sort((a, b) => new Date(b.appliedOn) - new Date(a.appliedOn))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
   }, [leaveRequests, filter, search])
 
   const counts = useMemo(() => ({
     all: leaveRequests.length,
-    pending: leaveRequests.filter((r) => r.status === 'pending').length,
-    approved: leaveRequests.filter((r) => r.status === 'approved').length,
-    rejected: leaveRequests.filter((r) => r.status === 'rejected').length,
+    pending: leaveRequests.filter((r) => r.status.toLowerCase() === 'pending').length,
+    approved: leaveRequests.filter((r) => r.status.toLowerCase() === 'approved').length,
+    rejected: leaveRequests.filter((r) => r.status.toLowerCase() === 'rejected').length,
   }), [leaveRequests])
 
   function openReview(request, action) {
@@ -52,12 +65,27 @@ export default function LeaveRequests() {
     setReviewModal({ request, action })
   }
 
-  function confirmReview() {
-    if (!reviewModal) return
-    if (reviewModal.action === 'approve') approveLeave(reviewModal.request.id, noteText)
-    else rejectLeave(reviewModal.request.id, noteText)
-    setReviewModal(null)
+  async function confirmReview() {
+    if (!reviewModal || isProcessing) return
+    
+    setProcessing(true)
+    try {
+      if (reviewModal.action === 'approve') {
+        await hrService.approveLeaveRequest(axiosInstance, reviewModal.request.id, noteText)
+      } else {
+        await hrService.rejectLeaveRequest(axiosInstance, reviewModal.request.id, noteText)
+      }
+      await refresh()
+      setReviewModal(null)
+    } catch (err) {
+      console.error('Failed to process review:', err)
+      alert('Failed to process review. Please try again.')
+    } finally {
+      setProcessing(false)
+    }
   }
+
+  if (isLoading) return <div className="flex h-96 items-center justify-center"><Loader /></div>
 
   return (
     <section className="space-y-8">
@@ -136,21 +164,36 @@ export default function LeaveRequests() {
                   </tr>
                 ) : (
                   filtered.map((req) => {
-                    const emp = getEmployeeById(req.employeeId)
                     return (
                       <tr key={req.id} className="transition-colors hover:bg-ink-25/30">
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
-                            <Avatar initials={emp?.avatar || '??'} />
-                            <div>
-                              <p className="font-bold text-ink-900">{emp?.name || req.employeeId}</p>
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">{emp?.department}</p>
+                            <Avatar initials={getInitials(req.employee)} />
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-2">
+                                <p className="font-bold text-ink-900">{req.employee}</p>
+                                {req.attachmentUrl && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault()
+                                      openAttachment(req.attachmentUrl, req.attachmentName)
+                                    }}
+                                    className="flex h-5 w-5 items-center justify-center rounded-md bg-brand-50 text-brand-600 transition hover:bg-brand-100"
+                                    title="View Attachment"
+                                  >
+                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-ink-400">{req.department}</p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-5">
                           <span className="rounded-lg bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700">
-                            {req.leaveType}
+                            {req.type}
                           </span>
                         </td>
                         <td className="px-6 py-5">
@@ -162,13 +205,13 @@ export default function LeaveRequests() {
                           </div>
                         </td>
                         <td className="px-6 py-5 text-xs font-medium text-ink-500">
-                          {formatDate(req.appliedOn)}
+                          {formatDate(req.createdAt)}
                         </td>
                         <td className="px-6 py-5">
                           <Badge status={req.status} />
                         </td>
                         <td className="px-6 py-5">
-                          {req.status === 'pending' ? (
+                          {req.status.toLowerCase() === 'pending' ? (
                             <div className="flex gap-2">
                               <button
                                 onClick={() => openReview(req, 'approve')}
@@ -191,7 +234,7 @@ export default function LeaveRequests() {
                             </div>
                           ) : (
                             <span className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
-                              {req.reviewedOn ? `Reviewed: ${formatDate(req.reviewedOn)}` : '—'}
+                              {req.decidedAt ? `Reviewed: ${formatDate(req.decidedAt)}` : '—'}
                             </span>
                           )}
                         </td>
@@ -208,20 +251,20 @@ export default function LeaveRequests() {
       {/* Review Modal */}
       <Modal
         isOpen={Boolean(reviewModal)}
-        onClose={() => setReviewModal(null)}
+        onClose={() => !isProcessing && setReviewModal(null)}
         title={reviewModal?.action === 'approve' ? 'Approve Leave' : 'Reject Leave'}
       >
         {reviewModal && (
           <div className="space-y-6 pt-2">
             <div className="rounded-3xl bg-ink-25 p-6 border border-ink-50">
               <div className="flex items-center gap-4">
-                <Avatar initials={getEmployeeById(reviewModal.request.employeeId)?.avatar || '??'} size="md" />
+                <Avatar initials={getInitials(reviewModal.request.employee)} size="md" />
                 <div>
                   <p className="font-bold text-ink-900">
-                    {getEmployeeById(reviewModal.request.employeeId)?.name}
+                    {reviewModal.request.employee}
                   </p>
                   <p className="mt-0.5 text-xs font-medium text-ink-500">
-                    {reviewModal.request.leaveType} · {reviewModal.request.days} days
+                    {reviewModal.request.type} · {reviewModal.request.days} days
                   </p>
                 </div>
               </div>
@@ -238,6 +281,20 @@ export default function LeaveRequests() {
                     </p>
                   </>
                 )}
+                {reviewModal.request.attachmentUrl && (
+                  <div className="mt-4">
+                    <p className="text-xs font-bold uppercase tracking-widest text-ink-400 mb-2">Attachment</p>
+                    <button
+                      onClick={() => openAttachment(reviewModal.request.attachmentUrl, reviewModal.request.attachmentName)}
+                      className="flex items-center gap-2 rounded-xl border border-brand-100 bg-brand-50 px-4 py-2.5 text-xs font-bold text-brand-700 transition hover:bg-brand-100"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                      </svg>
+                      {reviewModal.request.attachmentName || 'View Attachment'}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -249,26 +306,30 @@ export default function LeaveRequests() {
                 rows={4}
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
+                disabled={isProcessing}
                 placeholder={reviewModal.action === 'approve' ? "Add an encouraging note..." : "Explain the reason for rejection..."}
-                className="w-full rounded-2xl border border-ink-100 bg-white px-5 py-4 text-sm text-ink-900 outline-none transition placeholder:text-ink-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 shadow-sm"
+                className="w-full rounded-2xl border border-ink-100 bg-white px-5 py-4 text-sm text-ink-900 outline-none transition placeholder:text-ink-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 shadow-sm disabled:opacity-50"
               />
             </div>
 
             <div className="flex gap-4 pt-2">
               <button
                 onClick={() => setReviewModal(null)}
-                className="flex-1 rounded-2xl border border-ink-100 bg-white px-6 py-4 text-sm font-bold text-ink-900 transition hover:bg-ink-50"
+                disabled={isProcessing}
+                className="flex-1 rounded-2xl border border-ink-100 bg-white px-6 py-4 text-sm font-bold text-ink-900 transition hover:bg-ink-50 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmReview}
+                disabled={isProcessing}
                 className={`flex-[2] rounded-2xl px-6 py-4 text-sm font-bold text-white shadow-lg transition ${
                   reviewModal.action === 'approve' 
                     ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100' 
                     : 'bg-red-600 hover:bg-red-700 shadow-red-100'
-                }`}
+                } disabled:opacity-50 flex items-center justify-center gap-2`}
               >
+                {isProcessing && <Loader size="sm" color="white" />}
                 {reviewModal.action === 'approve' ? 'Confirm Approval' : 'Confirm Rejection'}
               </button>
             </div>
