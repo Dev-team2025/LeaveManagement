@@ -5,6 +5,7 @@ import { LeaveRequest } from '../models/LeaveRequest.js'
 import { Settings } from '../models/Settings.js'
 import { Notification } from '../models/Notification.js'
 import { User } from '../models/User.js'
+import { Holiday } from '../models/Holiday.js'
 import { diffDaysInclusive, countBusinessDays, isDateInAnyRange, toDateOnlyISO } from '../utils/dates.js'
 import { getUsedDaysForUserInYear } from '../utils/balance.js'
 
@@ -53,6 +54,19 @@ employeeRouter.put('/profile', async (req, res) => {
 employeeRouter.get('/leave-types', async (_req, res) => {
   const rows = await LeaveType.find({ isActive: true }).sort({ name: 1 }).lean()
   return res.json(rows.map((lt) => lt.name))
+})
+
+employeeRouter.get('/holidays', async (_req, res) => {
+  const rows = await Holiday.find({ isActive: true }).sort({ date: 1 }).lean()
+  return res.json(
+    rows.map((row) => ({
+      id: String(row._id),
+      name: row.name,
+      date: toDateOnlyISO(row.date),
+      type: row.type,
+      description: row.description || '',
+    })),
+  )
 })
 
 employeeRouter.get('/leaves', async (req, res) => {
