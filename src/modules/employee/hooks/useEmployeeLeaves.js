@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import useAxios from '@/hooks/useAxios'
 import employeeService from '@/modules/employee/services/employeeService'
 
@@ -7,7 +7,7 @@ export function useEmployeeLeaves() {
   const [leaves, setLeaves] = useState([])
   const [isLoading, setLoading] = useState(true)
 
-  const loadLeaves = async () => {
+  const loadLeaves = useCallback(async () => {
     setLoading(true)
     try {
       const response = await employeeService.getLeaves(axiosInstance)
@@ -17,11 +17,11 @@ export function useEmployeeLeaves() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [axiosInstance])
 
   useEffect(() => {
     loadLeaves()
-  }, [axiosInstance])
+  }, [loadLeaves])
 
   return { leaves, isLoading, refresh: loadLeaves }
 }

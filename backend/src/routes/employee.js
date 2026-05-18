@@ -63,6 +63,7 @@ employeeRouter.get('/leaves', async (req, res) => {
   return res.json(
     rows.map((row) => ({
       id: String(row._id),
+      userId: String(row.userId),
       leaveType: row.leaveTypeName,
       fromDate: toDateOnlyISO(row.startDate),
       toDate: toDateOnlyISO(row.endDate),

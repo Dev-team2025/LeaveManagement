@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from 'react'
 import InputField from '@/modules/employee/components/InputField'
 import useAxios from '@/hooks/useAxios'
 import employeeService from '@/modules/employee/services/employeeService'
+import { useAppData } from '@/context/AppDataContext'
+import useAuth from '@/hooks/useAuth'
 
 const initialValues = {
   leaveType: 'Casual Leave',
@@ -12,6 +14,8 @@ const initialValues = {
 
 function LeaveForm() {
   const axiosInstance = useAxios()
+  const { applyLeave } = useAppData()
+  const { user } = useAuth()
   const [values, setValues] = useState(initialValues)
   const [attachment, setAttachment] = useState(null)
   const [errors, setErrors] = useState({})
@@ -102,7 +106,7 @@ function LeaveForm() {
         attachmentUrl: attachment?.data || null,
         attachmentName: attachment?.name || null,
       }
-      const response = await employeeService.submitLeave(axiosInstance, payload)
+      const response = await applyLeave(user?.id, payload)
       setSuccessMessage(response.message || 'Leave request submitted successfully.')
     } catch (submitError) {
       setSuccessMessage('')

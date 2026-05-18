@@ -1,11 +1,11 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState, useEffect } from 'react'
+import useAxios from '@/hooks/useAxios'
+import hrService from '@/modules/hr/services/hrService'
+import employeeService from '@/modules/employee/services/employeeService'
+import managerService from '@/modules/manager/services/managerService'
 import {
-  EMPLOYEES,
   HOLIDAYS,
-  LEAVE_BALANCES,
   LEAVE_POLICIES,
-  LEAVE_REQUESTS,
-  NOTIFICATIONS,
   getBalancesForEmployee,
   getLeaveRequestsByEmployee,
   getLeaveRequestsByManager,
@@ -23,90 +23,91 @@ export const AppDataContext = createContext(undefined)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function AppDataProvider({ children }) {
-  const [employees, setEmployees] = useState(EMPLOYEES)
-  const [leaveRequests, setLeaveRequests] = useState(LEAVE_REQUESTS)
-  const [leaveBalances, setLeaveBalances] = useState(LEAVE_BALANCES)
+  const axiosInstance = useAxios()
+  const [employees, setEmployees] = useState([])
+  const [leaveRequests, setLeaveRequests] = useState([])
+  const [leaveBalances, setLeaveBalances] = useState([])
   const [leavePolicies, setLeavePolicies] = useState(LEAVE_POLICIES)
   const [holidays] = useState(HOLIDAYS)
-  const [notifications, setNotifications] = useState(NOTIFICATIONS)
+  const [notifications, setNotifications] = useState([])
+  const [isLoading, setLoading] = useState(true)
+
+  const refreshData = useCallback(async () => {
+    setLoading(true)
+    try {
+      // Fetch all necessary data for the context
+      const [hrRequests, empLeaves, allEmployees] = await Promise.all([
+        hrService.getLeaveRequests(axiosInstance).catch(() => []),
+        employeeService.getLeaves(axiosInstance).catch(() => []),
+        hrService.getEmployees(axiosInstance).catch(() => []),
+      ])
+
+      // Set employees for selectors
+      setEmployees(allEmployees)
+
+      // Combine and deduplicate requests
+      // For HR role, hrRequests will have all requests. For others, empLeaves will have theirs.
+      const allRequests = hrRequests.length > 0 ? hrRequests : empLeaves
+      
+      // Map backend fields to the frontend fields expected by the original UI
+      const mappedRequests = allRequests.map(r => ({
+        id: r.id,
+        employeeId: r.employeeId || r.userId,
+        leaveType: r.type || r.leaveType,
+        fromDate: r.fromDate,
+        toDate: r.toDate,
+        days: r.days,
+        reason: r.reason,
+        status: (r.status || 'pending').toLowerCase(),
+        appliedOn: r.createdAt || r.appliedOn,
+        reviewedOn: r.decidedAt || r.reviewedOn,
+        reviewNote: r.note || r.reviewNote,
+        attachmentUrl: r.attachmentUrl,
+        attachmentName: r.attachmentName
+      }))
+
+      setLeaveRequests(mappedRequests)
+    } catch (err) {
+      console.error('Failed to refresh AppData:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [axiosInstance])
+
+  useEffect(() => {
+    refreshData()
+  }, [refreshData])
 
   // ── Actions ─────────────────────────────────────────────────────────────────
 
-  const approveLeave = useCallback((requestId, reviewerNote = '') => {
-    setLeaveRequests((prev) =>
-      prev.map((lr) =>
-        lr.id === requestId
-          ? { ...lr, status: 'approved', reviewedOn: new Date().toISOString().split('T')[0], reviewNote: reviewerNote }
-          : lr,
-      ),
-    )
-    // Update balance: move pending days → used days
-    setLeaveBalances((prev) => {
-      const req = leaveRequests.find((lr) => lr.id === requestId)
-      if (!req) return prev
-      return prev.map((bal) => {
-        if (bal.employeeId === req.employeeId && bal.leaveType === req.leaveType) {
-          return {
-            ...bal,
-            usedDays: bal.usedDays + req.days,
-            pendingDays: Math.max(0, bal.pendingDays - req.days),
-          }
-        }
-        return bal
-      })
-    })
-  }, [leaveRequests])
-
-  const rejectLeave = useCallback((requestId, reviewerNote = '') => {
-    setLeaveRequests((prev) =>
-      prev.map((lr) =>
-        lr.id === requestId
-          ? { ...lr, status: 'rejected', reviewedOn: new Date().toISOString().split('T')[0], reviewNote: reviewerNote }
-          : lr,
-      ),
-    )
-    // Restore pending days in balance
-    setLeaveBalances((prev) => {
-      const req = leaveRequests.find((lr) => lr.id === requestId)
-      if (!req) return prev
-      return prev.map((bal) => {
-        if (bal.employeeId === req.employeeId && bal.leaveType === req.leaveType) {
-          return { ...bal, pendingDays: Math.max(0, bal.pendingDays - req.days) }
-        }
-        return bal
-      })
-    })
-  }, [leaveRequests])
-
-  const applyLeave = useCallback((employeeId, payload) => {
-    const id = `LR${String(Date.now()).slice(-6)}`
-    const newRequest = {
-      id,
-      employeeId,
-      policyId: leavePolicies.find((p) => p.leaveType === payload.leaveType)?.id || '',
-      leaveType: payload.leaveType,
-      fromDate: payload.fromDate,
-      toDate: payload.toDate,
-      days: payload.days,
-      reason: payload.reason,
-      status: 'pending',
-      appliedOn: new Date().toISOString().split('T')[0],
-      reviewedBy: null,
-      reviewedOn: null,
-      reviewNote: '',
+  const approveLeave = useCallback(async (requestId, reviewerNote = '') => {
+    try {
+      await hrService.approveLeaveRequest(axiosInstance, requestId, reviewerNote)
+      await refreshData()
+    } catch (err) {
+      console.error('Failed to approve leave:', err)
     }
-    setLeaveRequests((prev) => [newRequest, ...prev])
-    // Add pending days to balance
-    setLeaveBalances((prev) =>
-      prev.map((bal) => {
-        if (bal.employeeId === employeeId && bal.leaveType === payload.leaveType) {
-          return { ...bal, pendingDays: bal.pendingDays + payload.days }
-        }
-        return bal
-      }),
-    )
-    return newRequest
-  }, [leavePolicies])
+  }, [axiosInstance, refreshData])
+
+  const rejectLeave = useCallback(async (requestId, reviewerNote = '') => {
+    try {
+      await hrService.rejectLeaveRequest(axiosInstance, requestId, reviewerNote)
+      await refreshData()
+    } catch (err) {
+      console.error('Failed to reject leave:', err)
+    }
+  }, [axiosInstance, refreshData])
+
+  const applyLeave = useCallback(async (employeeId, payload) => {
+    try {
+      const response = await employeeService.submitLeave(axiosInstance, payload)
+      await refreshData()
+      return response
+    } catch (err) {
+      console.error('Failed to apply leave:', err)
+      throw err
+    }
+  }, [axiosInstance, refreshData])
 
   const markNotificationRead = useCallback((notifId) => {
     setNotifications((prev) =>

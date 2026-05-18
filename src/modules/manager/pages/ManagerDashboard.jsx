@@ -1,9 +1,9 @@
-import { useMemo, useState, useEffect, useCallback } from 'react'
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { StatCard, Badge, Loader } from '@/components/common'
+import { StatCard, Badge } from '@/components/common'
+import { useAppData } from '@/context/AppDataContext'
 import useAuth from '@/hooks/useAuth'
-import useAxios from '@/hooks/useAxios'
-import managerService from '@/modules/manager/services/managerService'
+import { getEmployeeById } from '@/data/mockData'
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const ICONS = {
@@ -29,59 +29,49 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
 }
 
-function initials(name) {
-  if (!name) return ''
-  return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-}
-
 export default function ManagerDashboard() {
-  const axiosInstance = useAxios()
-  const [data, setData] = useState(null)
-  const [isLoading, setLoading] = useState(true)
+  const { leaveRequests, employees, notifications, approveLeave } = useAppData()
   const { user } = useAuth()
+  const managerId = user?.id || 'EMP003'
 
-  const loadData = useCallback(async () => {
-    try {
-      const [dashboard, teamLeaves, pending] = await Promise.all([
-        managerService.getDashboard(axiosInstance),
-        managerService.getTeamLeaves(axiosInstance),
-        managerService.getPendingRequests(axiosInstance),
-      ])
-      setData({ dashboard, teamLeaves, pending })
-    } catch (err) {
-      console.error('Failed to load manager dashboard:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [axiosInstance])
+  const teamEmployees = useMemo(
+    () => employees.filter((e) => e.managerId === managerId),
+    [employees, managerId],
+  )
 
-  useEffect(() => {
-    loadData()
-  }, [loadData])
+  const teamRequests = useMemo(
+    () => leaveRequests.filter((r) => teamEmployees.some((e) => e.id === r.employeeId)),
+    [leaveRequests, teamEmployees],
+  )
 
   const stats = useMemo(() => {
-    if (!data) return { teamSize: 0, pending: 0, onLeaveToday: 0, upcoming: 0 }
-    
-    // Extract values from dashboard cards or compute from teamLeaves
-    const cards = data.dashboard.cards || []
-    const pendingCount = cards.find(c => c.id === 'pending')?.value || 0
-    const awayToday = cards.find(c => c.id === 'team-away')?.value || 0
-    
-    // For others we might need to compute or use mock-like logic for now if backend is limited
+    const today = new Date().toISOString().split('T')[0]
     return {
-      teamSize: data.teamLeaves.reduce((acc, curr) => {
-        // Unique employees in team leaves
-        return acc.includes(curr.employee) ? acc : [...acc, curr.employee]
-      }, []).length,
-      pending: pendingCount,
-      onLeaveToday: awayToday,
-      upcoming: data.teamLeaves.filter(r => r.status === 'approved' && new Date(r.fromDate) > new Date()).length
+      teamSize: teamEmployees.length,
+      pending: teamRequests.filter((r) => r.status === 'pending').length,
+      onLeaveToday: teamRequests.filter((r) =>
+        r.status === 'approved' &&
+        r.fromDate <= today &&
+        r.toDate >= today
+      ).length,
+      upcoming: teamRequests.filter((r) => r.status === 'approved' && r.fromDate > today).length,
     }
-  }, [data])
+  }, [teamEmployees, teamRequests])
 
-  if (isLoading) return <div className="flex h-96 items-center justify-center"><Loader /></div>
+  const pendingRequests = useMemo(
+    () => teamRequests.filter(r => r.status === 'pending').sort((a, b) => new Date(b.appliedOn) - new Date(a.appliedOn)).slice(0, 5),
+    [teamRequests]
+  )
 
-  const pendingRequests = data.pending.slice(0, 5)
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => n.recipientId === (user?.id || 'EMP003') && !n.isRead).length,
+    [notifications, user],
+  )
+
+  function initials(name) {
+    if (!name) return ''
+    return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+  }
 
   return (
     <section className="space-y-8 pb-20">
@@ -95,6 +85,14 @@ export default function ManagerDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
+          {unreadCount > 0 && (
+            <Link to="/manager/notifications" className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-ink-100 bg-white transition hover:bg-ink-50">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-ink-600">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white ring-4 ring-white">{unreadCount}</span>
+            </Link>
+          )}
           <Link to="/manager/team-leaves" className="inline-flex h-11 items-center gap-2 rounded-2xl bg-brand-600 px-5 text-sm font-bold text-white shadow-lg shadow-brand-100 transition hover:bg-brand-700 hover:scale-[1.02]">
             Authorise Leaves
           </Link>
@@ -111,7 +109,7 @@ export default function ManagerDashboard() {
             <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg uppercase tracking-widest">Active</span>
           </div>
           <div className="mt-5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-ink-400">Team Members Seen</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-ink-400">Direct Reports</p>
             <h3 className="mt-1 text-3xl font-black text-ink-900">{stats.teamSize}</h3>
           </div>
           <div className="absolute -right-2 -bottom-2 h-16 w-16 bg-indigo-50/50 rounded-full blur-2xl"></div>
@@ -173,67 +171,107 @@ export default function ManagerDashboard() {
                 <p className="mt-1 text-xs font-bold text-ink-400">No pending time-off requests at the moment.</p>
               </div>
             ) : (
-              pendingRequests.map((req) => (
-                <div key={req.id} className="group relative flex flex-col gap-6 overflow-hidden rounded-[32px] border border-ink-50 bg-white p-6 shadow-sm transition hover:shadow-xl hover:border-brand-200 sm:flex-row sm:items-center">
-                  <div className="flex items-center gap-5 flex-1">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-brand-50 text-brand-600 font-black text-sm border border-brand-100 shadow-sm">
-                      {initials(req.employee)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-base font-black text-ink-900 tracking-tight leading-tight">{req.employee}</p>
-                      <div className="mt-1 flex items-center gap-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-brand-600">{req.leaveType}</span>
-                        <span className="text-[10px] text-ink-200">•</span>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-ink-400">{req.days} Days Requested</span>
+              pendingRequests.map((req) => {
+                const emp = getEmployeeById(req.employeeId)
+                return (
+                  <div key={req.id} className="group relative flex flex-col gap-6 overflow-hidden rounded-[32px] border border-ink-50 bg-white p-6 shadow-sm transition hover:shadow-xl hover:border-brand-200 sm:flex-row sm:items-center">
+                    <div className="flex items-center gap-5 flex-1">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] bg-brand-50 text-brand-600 font-black text-sm border border-brand-100 shadow-sm">
+                        {emp?.avatar || initials(emp?.name) || '??'}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-base font-black text-ink-900 tracking-tight leading-tight">{emp?.name}</p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-brand-600">{req.leaveType}</span>
+                          <span className="text-[10px] text-ink-200">•</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-ink-400">{req.days} Days Requested</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex-1 lg:max-w-[140px]">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-ink-300 mb-1">Period</p>
-                    <p className="text-sm font-bold text-ink-700">{formatDate(req.fromDate)} — {formatDate(req.toDate)}</p>
-                  </div>
+                    <div className="flex-1 lg:max-w-[140px]">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-ink-300 mb-1">Period</p>
+                      <p className="text-sm font-bold text-ink-700">{formatDate(req.fromDate)} — {formatDate(req.toDate)}</p>
+                    </div>
 
-                  <div className="flex items-center gap-3">
-                    <Link
-                      to="/manager/team-leaves"
-                      className="rounded-2xl border border-ink-100 bg-white px-5 py-3 text-[10px] font-black text-ink-900 transition hover:bg-ink-50 uppercase tracking-widest"
-                    >
-                      Details
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <Link
+                        to="/manager/team-leaves"
+                        className="rounded-2xl border border-ink-100 bg-white px-5 py-3 text-[10px] font-black text-ink-900 transition hover:bg-ink-50 uppercase tracking-widest"
+                      >
+                        Details
+                      </Link>
+                      <button
+                        onClick={() => approveLeave(req.id, 'Manager dashboard quick approve')}
+                        className="rounded-2xl bg-brand-600 px-6 py-3 text-[10px] font-black text-white shadow-lg shadow-brand-100 transition hover:bg-brand-700 hover:scale-[1.03]"
+                      >
+                        APPROVE
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         </div>
 
-        {/* Action Panel Side */}
+        {/* Team Presence Side Panel */}
         <div className="space-y-6">
-          <h2 className="text-xl font-black text-ink-900 uppercase tracking-tight">Manager Actions</h2>
+          <h2 className="text-xl font-black text-ink-900 uppercase tracking-tight">Team Health</h2>
           <div className="rounded-[40px] border border-ink-100 bg-white p-8 shadow-panel relative overflow-hidden">
-            <div className="space-y-4 relative z-10">
-              <Link to="/manager/team-members" className="flex items-center justify-between p-4 rounded-2xl bg-ink-25 hover:bg-ink-50 transition border border-ink-50 group">
-                <span className="text-sm font-black text-ink-900 uppercase tracking-widest">Team Members</span>
-                <svg className="h-5 w-5 text-ink-400 group-hover:translate-x-1 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-              </Link>
-              <Link to="/manager/team-calendar" className="flex items-center justify-between p-4 rounded-2xl bg-ink-25 hover:bg-ink-50 transition border border-ink-50 group">
-                <span className="text-sm font-black text-ink-900 uppercase tracking-widest">Team Calendar</span>
-                <svg className="h-5 w-5 text-ink-400 group-hover:translate-x-1 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-              </Link>
-              <Link to="/manager/wfh-requests" className="flex items-center justify-between p-4 rounded-2xl bg-ink-25 hover:bg-ink-50 transition border border-ink-50 group">
-                <span className="text-sm font-black text-ink-900 uppercase tracking-widest">WFH Requests</span>
-                <svg className="h-5 w-5 text-ink-400 group-hover:translate-x-1 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            <div className="space-y-6 relative z-10">
+              {teamEmployees.map((emp) => {
+                const today = new Date().toISOString().split('T')[0]
+                const activeLeave = leaveRequests.find(
+                  (r) => r.employeeId === emp.id && r.status === 'approved' &&
+                    r.fromDate <= today && r.toDate >= today,
+                )
+
+                return (
+                  <div key={emp.id} className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-ink-50 text-xs font-black text-ink-900 border border-ink-100 shadow-sm transition hover:scale-105">
+                        {emp.avatar || initials(emp.name)}
+                      </div>
+                      <span className={`absolute -right-1.5 -bottom-1.5 h-4 w-4 rounded-full border-4 border-white ${activeLeave ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-ink-900 leading-tight">{emp.name}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-ink-400 mt-1">{emp.designation}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="mt-10 pt-8 border-t border-ink-50 relative z-10">
+              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-ink-300">
+                <span>Capacity Level</span>
+                <span>{Math.round((teamEmployees.length - stats.onLeaveToday) / (teamEmployees.length || 1) * 100)}% ACTIVE</span>
+              </div>
+              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-ink-50">
+                <div
+                  className="h-full bg-brand-600 rounded-full transition-all duration-1000 shadow-sm shadow-brand-100"
+                  style={{ width: `${(teamEmployees.length - stats.onLeaveToday) / (teamEmployees.length || 1) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="absolute right-0 top-0 h-32 w-32 bg-brand-50 rounded-full -translate-y-16 translate-x-16 blur-3xl opacity-50"></div>
+          </div>
+
+          <div className="rounded-[40px] bg-brand-600 p-8 shadow-xl shadow-brand-100 text-white relative overflow-hidden group">
+            <div className="relative z-10">
+              <h3 className="text-lg font-black uppercase tracking-tight">Need a full view?</h3>
+              <p className="mt-1 text-sm font-medium text-brand-100 leading-relaxed">Access the interactive team calendar for visual planning.</p>
+              <Link to="/manager/team-calendar" className="mt-6 inline-flex h-11 items-center justify-center rounded-2xl bg-white px-6 text-xs font-black !text-black uppercase tracking-widest transition group-hover:scale-105 active:scale-95">
+                Launch Calendar
               </Link>
             </div>
+            <div className="absolute -right-4 -bottom-4 h-24 w-24 bg-white/10 rounded-3xl rotate-12 transition group-hover:rotate-45"></div>
           </div>
         </div>
       </div>
     </section>
   )
-}
-
-function initials(name) {
-  if (!name) return ''
-  return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 }

@@ -38,6 +38,7 @@ hrRouter.get('/requests', async (_req, res) => {
   return res.json(
     rows.map((row) => ({
       id: String(row._id),
+      userId: row.userId?._id ? String(row.userId._id) : String(row.userId),
       employee: row.userId?.name || row.userId?.email || 'Employee',
       department: row.userId?.department || '',
       type: row.leaveTypeName,
