@@ -117,10 +117,17 @@ employeeRouter.post('/leaves', async (req, res) => {
     return res.status(400).json({ message: 'Unknown leave type.' })
   }
 
-  const days = countBusinessDays(startDate, endDate)
+  // Fetch active holidays in the requested range to exclude them from the count
+  const holidaysInRange = await Holiday.find({
+    isActive: true,
+    date: { $gte: startDate, $lte: endDate },
+  }).lean()
+  const holidayDates = holidaysInRange.map((h) => h.date)
+
+  const days = countBusinessDays(startDate, endDate, holidayDates)
 
   if (days === 0) {
-    return res.status(400).json({ message: 'Selected date range contains no business days.' })
+    return res.status(400).json({ message: 'Selected date range contains no business days or is entirely holidays.' })
   }
 
   const settings = await Settings.findOne({ key: 'default' }).lean()

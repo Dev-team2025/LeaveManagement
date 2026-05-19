@@ -20,6 +20,7 @@ export default function TeamLeaves() {
   const [isLoading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState('all')
   const [selectedRequest, setSelectedRequest] = useState(null)
+  const [selectedAction, setSelectedAction] = useState(null) // 'approve' or 'reject'
   const [note, setNote] = useState('')
   const [isProcessing, setProcessing] = useState(false)
 
@@ -73,17 +74,18 @@ export default function TeamLeaves() {
     }
   }, [leaveRequests])
 
-  async function handleAction(action) {
-    if (!selectedRequest || isProcessing) return
+  async function handleAction() {
+    if (!selectedRequest || !selectedAction || isProcessing) return
     setProcessing(true)
     try {
-      if (action === 'approve') {
-        await managerService.approveRequest(axiosInstance, selectedRequest.id)
+      if (selectedAction === 'approve') {
+        await managerService.approveRequest(axiosInstance, selectedRequest.id, note)
       } else {
         await managerService.rejectRequest(axiosInstance, selectedRequest.id, note)
       }
       await loadRequests()
       setSelectedRequest(null)
+      setSelectedAction(null)
       setNote('')
     } catch (err) {
       console.error('Failed to process request:', err)
@@ -91,6 +93,12 @@ export default function TeamLeaves() {
     } finally {
       setProcessing(false)
     }
+  }
+
+  function openReview(request, action) {
+    setNote('')
+    setSelectedRequest(request)
+    setSelectedAction(action)
   }
 
   function getInitials(name) {
@@ -183,12 +191,27 @@ export default function TeamLeaves() {
                     </td>
                     <td className="px-8 py-7">
                        {req.status === 'pending' ? (
-                         <button 
-                           onClick={() => setSelectedRequest(req)}
-                           className="group/btn inline-flex items-center gap-2 rounded-2xl bg-black px-5 py-3 text-[10px] font-black text-white shadow-xl shadow-black/10 transition hover:bg-brand-600 hover:scale-105 active:scale-95"
-                         >
-                           AUTHORISE <svg className="transition group-hover/btn:translate-x-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                         </button>
+                         <div className="flex gap-3">
+                           <button
+                             onClick={() => openReview(req, 'approve')}
+                             className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 transition hover:bg-emerald-600 hover:text-white shadow-sm border border-emerald-100/50"
+                             title="Approve"
+                           >
+                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                               <polyline points="20 6 9 17 4 12"></polyline>
+                             </svg>
+                           </button>
+                           <button
+                             onClick={() => openReview(req, 'reject')}
+                             className="flex h-10 w-10 items-center justify-center rounded-2xl bg-red-50 text-red-600 transition hover:bg-red-600 hover:text-white shadow-sm border border-red-100/50"
+                             title="Reject"
+                           >
+                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                               <line x1="18" y1="6" x2="6" y2="18"></line>
+                               <line x1="6" y1="6" x2="18" y2="18"></line>
+                             </svg>
+                           </button>
+                         </div>
                        ) : (
                          <div className="flex flex-col">
                             <span className="text-[10px] font-black uppercase tracking-widest text-ink-300">Reviewed On</span>
@@ -208,8 +231,13 @@ export default function TeamLeaves() {
       {selectedRequest && (
         <Modal 
           isOpen={true} 
-          onClose={() => !isProcessing && setSelectedRequest(null)} 
-          title="Authorisation Intelligence"
+          onClose={() => {
+            if (!isProcessing) {
+              setSelectedRequest(null)
+              setSelectedAction(null)
+            }
+          }} 
+          title={selectedAction === 'approve' ? 'Approve Leave Request' : 'Reject Leave Request'}
         >
           <div className="space-y-8 py-6 px-1">
             <div className="flex items-center gap-6 rounded-[32px] bg-brand-50/50 p-6 border border-brand-100 shadow-sm">
@@ -258,21 +286,25 @@ export default function TeamLeaves() {
             </div>
 
             <div className="flex gap-4">
-               <button 
-                 onClick={() => handleAction('reject')}
-                 disabled={isProcessing}
-                 className="flex-1 rounded-2xl border border-red-100 bg-white py-4 text-[10px] font-black text-red-600 uppercase tracking-widest transition hover:bg-red-50 disabled:opacity-50"
-               >
-                 Decline Request
-               </button>
-               <button 
-                 onClick={() => handleAction('approve')}
-                 disabled={isProcessing}
-                 className="flex-1 rounded-2xl bg-brand-600 py-4 text-[10px] font-black text-white uppercase tracking-widest shadow-xl shadow-brand-100 transition hover:bg-brand-700 hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2"
-               >
-                 {isProcessing && <Loader size="sm" color="white" />}
-                 Confirm Approval
-               </button>
+               {selectedAction === 'reject' ? (
+                 <button 
+                   onClick={handleAction}
+                   disabled={isProcessing}
+                   className="flex-1 rounded-2xl bg-red-600 py-4 text-[10px] font-black text-white uppercase tracking-widest shadow-xl shadow-red-100 transition hover:bg-red-700 hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2"
+                 >
+                   {isProcessing && <Loader size="sm" color="white" />}
+                   Confirm Rejection
+                 </button>
+               ) : (
+                 <button 
+                   onClick={handleAction}
+                   disabled={isProcessing}
+                   className="flex-1 rounded-2xl bg-emerald-600 py-4 text-[10px] font-black text-white uppercase tracking-widest shadow-xl shadow-emerald-100 transition hover:bg-emerald-700 hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2"
+                 >
+                   {isProcessing && <Loader size="sm" color="white" />}
+                   Confirm Approval
+                 </button>
+               )}
             </div>
           </div>
         </Modal>

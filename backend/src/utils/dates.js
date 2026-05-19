@@ -12,14 +12,16 @@ export function diffDaysInclusive(start, end) {
   return Math.floor((endUtc - startUtc) / 86400000) + 1
 }
 
-export function countBusinessDays(start, end) {
+export function countBusinessDays(start, end, holidays = []) {
   const startDate = new Date(start)
   const endDate = new Date(end)
+  const holidaySet = new Set(holidays.map((h) => toDateOnlyISO(h)))
   let count = 0
   const curDate = new Date(startDate.getTime())
   while (curDate <= endDate) {
     const dayOfWeek = curDate.getUTCDay()
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+    const dateStr = toDateOnlyISO(curDate)
+    if (dayOfWeek !== 0 && dayOfWeek !== 6 && !holidaySet.has(dateStr)) {
       count++
     }
     curDate.setUTCDate(curDate.getUTCDate() + 1)

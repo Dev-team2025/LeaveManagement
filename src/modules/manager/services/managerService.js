@@ -13,8 +13,8 @@ export const managerService = {
     const { data } = await axiosInstance.get('/manager/requests/pending')
     return data
   },
-  async approveRequest(axiosInstance, requestId) {
-    const { data } = await axiosInstance.post(`/manager/requests/${requestId}/approve`, {})
+  async approveRequest(axiosInstance, requestId, reason = '') {
+    const { data } = await axiosInstance.post(`/manager/requests/${requestId}/approve`, { reason })
     return data
   },
   async rejectRequest(axiosInstance, requestId, reason = '') {

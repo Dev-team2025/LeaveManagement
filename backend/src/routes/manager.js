@@ -81,10 +81,11 @@ managerRouter.get('/requests/pending', async (req, res) => {
 
 managerRouter.post('/requests/:id/approve', async (req, res) => {
   const id = req.params.id
+  const decisionReason = String(req.body?.reason || '').trim()
 
   const updated = await LeaveRequest.findOneAndUpdate(
     { _id: id, status: 'pending' },
-    { $set: { status: 'approved', decidedBy: req.user.name, decidedAt: new Date(), decisionReason: '' } },
+    { $set: { status: 'approved', decidedBy: req.user.name, decidedAt: new Date(), decisionReason } },
     { new: true },
   ).lean()
 
