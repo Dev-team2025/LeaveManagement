@@ -32,7 +32,7 @@ export const API_ENDPOINTS = {
   },
 }
 
-export const LEAVE_TYPES = ['Sick Leave', 'Casual Leave', 'Paid Leave', 'WFH']
+export const LEAVE_TYPES = ['Sick Leave', 'Casual Leave', 'WFH']
 
 export const LEAVE_STATUS = {
   APPROVED: 'approved',

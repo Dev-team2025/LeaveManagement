@@ -4,6 +4,7 @@ import useAxios from '@/hooks/useAxios'
 import employeeService from '@/modules/employee/services/employeeService'
 import { useAppData } from '@/context/AppDataContext'
 import useAuth from '@/hooks/useAuth'
+import useEmployeeDashboard from '@/modules/employee/hooks/useEmployeeDashboard'
 
 const initialValues = {
   leaveType: 'Casual Leave',
@@ -16,11 +17,20 @@ function LeaveForm() {
   const axiosInstance = useAxios()
   const { applyLeave } = useAppData()
   const { user } = useAuth()
+  const { dashboard } = useEmployeeDashboard()
   const [values, setValues] = useState(initialValues)
   const [attachment, setAttachment] = useState(null)
   const [errors, setErrors] = useState({})
   const [leaveTypes, setLeaveTypes] = useState([])
   const [successMessage, setSuccessMessage] = useState('')
+
+  const selectedTile = useMemo(() => {
+    if (!dashboard.leaveTiles) return null
+    return dashboard.leaveTiles.find(t => 
+      t.leaveType === values.leaveType || 
+      (t.leaveType === 'WFH' && values.leaveType === 'Work From Home')
+    )
+  }, [dashboard.leaveTiles, values.leaveType])
 
   useEffect(() => {
     const loadLeaveTypes = async () => {
@@ -76,6 +86,13 @@ function LeaveForm() {
     }
     return count
   }, [values.fromDate, values.toDate])
+
+  const { unpaidDays, isLOP } = useMemo(() => {
+    if (!selectedTile || selectedTile.leaveType === 'WFH') return { unpaidDays: 0, isLOP: false }
+    const paidAvailable = selectedTile.availableDays ?? 0
+    const unpaid = Math.max(0, daysRequested - paidAvailable)
+    return { unpaidDays: unpaid, isLOP: unpaid > 0 }
+  }, [selectedTile, daysRequested])
 
   const validate = () => {
     const nextErrors = {}
@@ -163,9 +180,24 @@ function LeaveForm() {
             </div>
 
             {/* Total Days Requested Box */}
-            <div className="flex items-center justify-between rounded-2xl bg-brand-50 p-6">
-              <span className="text-sm font-medium text-ink-700">Total Days Requested</span>
-              <span className="text-3xl font-semibold text-brand-600">{daysRequested} days</span>
+            <div className="flex flex-col space-y-3 rounded-2xl bg-brand-50 p-6">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-ink-700">Total Days Requested</span>
+                <span className="text-3xl font-semibold text-brand-600">{daysRequested} days</span>
+              </div>
+              {isLOP && !successMessage && (
+                <div className="text-xs p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-100 font-bold flex items-center gap-2">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  This request includes {unpaidDays} day(s) as Loss of Pay (LOP)
+                </div>
+              )}
+              {successMessage && (
+                <div className={`text-sm p-3 rounded-lg ${successMessage.includes('Loss of Pay') ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}`}>
+                  {successMessage}
+                </div>
+              )}
             </div>
 
             <InputField
@@ -257,20 +289,27 @@ function LeaveForm() {
           <div className="mt-6 space-y-4">
             <div className="flex items-end justify-between">
               <span className="text-sm text-ink-500">Available</span>
-              <span className="text-2xl font-bold text-ink-900">5 days</span>
+              <span className="text-2xl font-bold text-ink-900">
+                {selectedTile?.leaveType === 'WFH' ? '∞' : `${selectedTile?.availableDays ?? 0} days`}
+              </span>
             </div>
             {/* Progress Bar */}
             <div className="h-2 w-full rounded-full bg-ink-100">
-              <div className="h-2 w-1/2 rounded-full bg-emerald-500" />
+              <div 
+                className={`h-2 rounded-full ${selectedTile?.tone === 'warning' ? 'bg-amber-500' : 'bg-emerald-500'}`} 
+                style={{ width: `${selectedTile ? (selectedTile.usedDays / (selectedTile.totalDays || 1)) * 100 : 0}%` }}
+              />
             </div>
             <div className="space-y-2 pt-2">
               <div className="flex justify-between text-sm">
                 <span className="text-ink-500">Total Allocation</span>
-                <span className="font-medium text-ink-900">10 days</span>
+                <span className="font-medium text-ink-900">
+                  {selectedTile?.leaveType === 'WFH' ? 'Unlimited' : `${selectedTile?.totalDays ?? 0} days`}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-ink-500">Already Used</span>
-                <span className="font-medium text-ink-900">5 days</span>
+                <span className="font-medium text-ink-900">{selectedTile?.usedDays ?? 0} days</span>
               </div>
             </div>
           </div>
@@ -284,10 +323,21 @@ function LeaveForm() {
               <span className="text-sm text-ink-500">Days Requested</span>
               <span className="text-2xl font-bold text-brand-600">{daysRequested}</span>
             </div>
-            <div className="flex items-center justify-between rounded-2xl bg-ink-25 p-4">
-              <span className="text-sm text-ink-500">Remaining Balance</span>
-              <span className="text-2xl font-bold text-ink-900">{5 - daysRequested}</span>
-            </div>
+            {isLOP ? (
+              <div className="flex items-center justify-between rounded-2xl bg-rose-50 p-4 border border-rose-100">
+                <span className="text-sm text-rose-600 font-bold">Loss of Pay (LOP)</span>
+                <span className="text-2xl font-bold text-rose-700">{unpaidDays} days</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between rounded-2xl bg-ink-25 p-4">
+                <span className="text-sm text-ink-500">Remaining Balance</span>
+                <span className="text-2xl font-bold text-ink-900">
+                  {selectedTile?.leaveType === 'WFH' 
+                    ? '∞' 
+                    : Math.max(0, (selectedTile?.availableDays ?? 0) - daysRequested)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

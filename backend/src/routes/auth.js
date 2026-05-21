@@ -26,6 +26,8 @@ function signToken(user) {
 }
 
 authRouter.post('/login', async (req, res) => {
+  console.log(`[Auth] Login attempt for: ${req.body?.email}`)
+  const start = Date.now()
   const email = String(req.body?.email || '').trim().toLowerCase()
   const password = String(req.body?.password || '')
 
@@ -34,16 +36,22 @@ authRouter.post('/login', async (req, res) => {
   }
 
   const user = await User.findOne({ email }).select('name email role passwordHash isActive')
+  console.log(`[Auth] DB lookup took: ${Date.now() - start}ms`)
+  
   if (!user || user.isActive === false) {
     return res.status(401).json({ message: 'Invalid email or password.' })
   }
 
+  const bcryptStart = Date.now()
   const ok = await bcrypt.compare(password, user.passwordHash)
+  console.log(`[Auth] Bcrypt compare took: ${Date.now() - bcryptStart}ms`)
+
   if (!ok) {
     return res.status(401).json({ message: 'Invalid email or password.' })
   }
 
   const token = signToken(user)
+  console.log(`[Auth] Total login time: ${Date.now() - start}ms`)
 
   return res.json({
     token,

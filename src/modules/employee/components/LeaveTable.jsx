@@ -8,7 +8,7 @@ function LeaveTable({ rows }) {
         <table className="min-w-full text-left">
           <thead className="bg-ink-50">
             <tr>
-              {['Leave Type', 'From Date', 'To Date', 'Status'].map((heading) => (
+              {['Leave Type', 'From Date', 'To Date', 'Status', 'Payment'].map((heading) => (
                 <th key={heading} className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-ink-500">
                   {heading}
                 </th>
@@ -23,6 +23,13 @@ function LeaveTable({ rows }) {
                 <td className="px-6 py-4">{formatDate(row.toDate)}</td>
                 <td className="px-6 py-4">
                   <LeaveStatusBadge status={row.status} />
+                </td>
+                <td className="px-6 py-4">
+                  {row.isPaid ? (
+                    <span className="text-emerald-600 font-medium">Paid</span>
+                  ) : (
+                    <span className="text-rose-600 font-medium">Unpaid (LOP)</span>
+                  )}
                 </td>
               </tr>
             ))}

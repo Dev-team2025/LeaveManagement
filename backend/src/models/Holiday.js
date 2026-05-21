@@ -19,6 +19,5 @@ holidaySchema.set('toJSON', {
     return ret
   },
 })
-
 export const Holiday = mongoose.models.Holiday || mongoose.model('Holiday', holidaySchema)
 
