@@ -2,6 +2,7 @@ import express from 'express'
 import { requireAuth, requireRole } from '../middleware/auth.js'
 import { LeaveRequest } from '../models/LeaveRequest.js'
 import { Notification } from '../models/Notification.js'
+import { User } from '../models/User.js'
 import { toDateOnlyISO } from '../utils/dates.js'
 
 export const managerRouter = express.Router()
@@ -16,13 +17,42 @@ managerRouter.get('/dashboard', async (req, res) => {
     decidedAt: { $gte: new Date(Date.now() - 86400000) },
   })
 
+  // Get some team stats
+  const teamMembers = await User.find({ managerId: req.user.id }).select('_id').lean()
+  const teamIds = teamMembers.map(m => m._id)
+  
+  const teamLeaves = await LeaveRequest.find({
+    userId: { $in: teamIds },
+    status: 'approved'
+  }).lean()
+
   return res.json({
     cards: [
       { id: 'team-away', label: 'Team members away today', value: approvedToday },
       { id: 'pending', label: 'Pending approvals', value: pending },
       { id: 'calendar', label: 'Upcoming overlaps', value: 0 },
     ],
+    teamStats: {
+      totalRequests: await LeaveRequest.countDocuments({ userId: { $in: teamIds } }),
+      unpaidCount: teamLeaves.filter(l => l.isPaid === false).length,
+      totalDeductions: teamLeaves.reduce((sum, l) => sum + (l.deductionAmount || 0), 0)
+    }
   })
+})
+
+managerRouter.get('/team-members', async (req, res) => {
+  const users = await User.find({ managerId: req.user.id }).sort({ name: 1 }).lean()
+  return res.json(
+    users.map((u) => ({
+      id: String(u._id),
+      name: u.name,
+      department: u.department || '',
+      role: u.role,
+      email: u.email,
+      isActive: u.isActive,
+      baseSalary: u.baseSalary || 0,
+    })),
+  )
 })
 
 managerRouter.get('/team-leaves', async (req, res) => {
@@ -37,6 +67,7 @@ managerRouter.get('/team-leaves', async (req, res) => {
   return res.json(
     rows.map((row) => ({
       id: String(row._id),
+      userId: row.userId?._id ? String(row.userId._id) : String(row.userId),
       employee: row.userId?.name || row.userId?.email || 'Employee',
       designation: row.userId?.designation || '',
       period: `${toDateOnlyISO(row.startDate)} - ${toDateOnlyISO(row.endDate)}`,
@@ -51,6 +82,8 @@ managerRouter.get('/team-leaves', async (req, res) => {
       decidedAt: row.decidedAt,
       attachmentUrl: row.attachmentUrl,
       attachmentName: row.attachmentName,
+      isPaid: row.isPaid !== false,
+      deductionAmount: row.deductionAmount || 0,
     })),
   )
 })
@@ -64,6 +97,7 @@ managerRouter.get('/requests/pending', async (req, res) => {
   return res.json(
     rows.map((row) => ({
       id: String(row._id),
+      userId: row.userId?._id ? String(row.userId._id) : String(row.userId),
       employee: row.userId?.name || row.userId?.email || 'Employee',
       leaveType: row.leaveTypeName,
       fromDate: toDateOnlyISO(row.startDate),
@@ -75,6 +109,8 @@ managerRouter.get('/requests/pending', async (req, res) => {
       createdAt: row.createdAt,
       attachmentUrl: row.attachmentUrl,
       attachmentName: row.attachmentName,
+      isPaid: row.isPaid !== false,
+      deductionAmount: row.deductionAmount || 0,
     })),
   )
 })

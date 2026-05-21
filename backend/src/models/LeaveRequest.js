@@ -14,6 +14,8 @@ const leaveRequestSchema = new mongoose.Schema(
     reason: { type: String, trim: true, default: '' },
     isEmergency: { type: Boolean, default: false }, // mainly for WFH rules
     status: { type: String, enum: STATUSES, default: 'pending', index: true },
+    deductionAmount: { type: Number, default: 0 },
+    isPaid: { type: Boolean, default: true },
     attachmentUrl: { type: String, default: null },
     attachmentName: { type: String, default: null },
     decidedBy: { type: String, default: null },

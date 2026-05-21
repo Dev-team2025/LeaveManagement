@@ -143,7 +143,7 @@ export default function TeamLeaves() {
         <table className="min-w-full divide-y divide-ink-50">
           <thead className="bg-ink-25/50">
             <tr>
-              {['Team Member', 'Category', 'Duration', 'Applied On', 'Status', 'Review'].map((h) => (
+              {['Team Member', 'Category', 'Duration', 'Applied On', 'Payment', 'Status', 'Review'].map((h) => (
                 <th key={h} className="px-8 py-6 text-left text-[10px] font-black uppercase tracking-[0.2em] text-ink-400">{h}</th>
               ))}
             </tr>
@@ -151,7 +151,7 @@ export default function TeamLeaves() {
           <tbody className="divide-y divide-ink-50">
             {filteredRequests.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-8 py-32 text-center">
+                <td colSpan={7} className="px-8 py-32 text-center">
                    <div className="mx-auto flex flex-col items-center">
                       <div className="flex h-20 w-20 items-center justify-center rounded-[28px] bg-ink-25 text-ink-200 mb-4 border-2 border-dashed border-ink-100">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -185,6 +185,13 @@ export default function TeamLeaves() {
                     </td>
                     <td className="px-8 py-7 text-xs font-bold text-ink-500 italic">
                        {new Date(req.appliedOn).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="px-8 py-7">
+                      {req.isPaid ? (
+                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Paid</span>
+                      ) : (
+                        <span className="text-[10px] font-black uppercase tracking-widest text-rose-600">Unpaid (LOP)</span>
+                      )}
                     </td>
                     <td className="px-8 py-7">
                        <Badge status={req.status} className="!text-[10px] !px-3 !py-1 !font-black !tracking-widest !uppercase" />

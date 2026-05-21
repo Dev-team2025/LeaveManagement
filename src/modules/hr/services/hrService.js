@@ -21,6 +21,10 @@ export const hrService = {
     const { data } = await axiosInstance.get(API_ENDPOINTS.HR.EMPLOYEES)
     return data
   },
+  async updateEmployee(axiosInstance, employeeId, updates) {
+    const { data } = await axiosInstance.put(`/hr/employees/${employeeId}`, updates)
+    return data
+  },
 }
 
 export default hrService
