@@ -19,8 +19,8 @@ function Navbar({ onToggleSidebar }) {
           <span className="mt-1 block h-0.5 w-5 bg-current" />
         </button>
         <div>
-          <p className="font-display text-lg font-semibold text-ink-900">Leave Management</p>
-          <p className="text-sm text-ink-500">Track approvals, balances, and role workflows</p>
+          <p className="font-display text-lg font-semibold text-ink-900">Leave Portal</p>
+          <p className="text-sm text-ink-500">Track approvals, balances, and workforce workflows</p>
         </div>
       </div>
 

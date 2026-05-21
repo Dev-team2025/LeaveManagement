@@ -52,7 +52,7 @@ function Login() {
               Workforce operations
             </span>
             <h1 className="mt-6 max-w-md font-display text-5xl font-semibold leading-tight">
-              Leave workflows for employees, managers, HR, and admins.
+              Leave Portal keeps employees, managers, HR, and admins in sync.
             </h1>
             <p className="mt-4 max-w-lg text-slate-300">
               Centralize requests, approvals, policies, and headcount visibility in one shared portal.
@@ -75,7 +75,7 @@ function Login() {
         <section className="p-6 sm:p-10">
           <div className="mx-auto max-w-md">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-brand-600">
-              Sign in
+              Leave Portal
             </p>
             <h2 className="mt-3 font-display text-3xl font-semibold text-ink-900">
               Welcome back

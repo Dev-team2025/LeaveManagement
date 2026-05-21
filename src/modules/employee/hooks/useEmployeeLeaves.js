@@ -11,7 +11,13 @@ export function useEmployeeLeaves() {
     setLoading(true)
     try {
       const response = await employeeService.getLeaves(axiosInstance)
-      setLeaves(response)
+      if (Array.isArray(response)) {
+        setLeaves(response)
+      } else if (Array.isArray(response?.leaves)) {
+        setLeaves(response.leaves)
+      } else {
+        setLeaves([])
+      }
     } catch (err) {
       console.error('Failed to load leave history:', err)
     } finally {

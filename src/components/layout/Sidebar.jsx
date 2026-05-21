@@ -58,11 +58,11 @@ function Sidebar({ isOpen, onClose }) {
         role="presentation"
       />
       <aside
-        className={`fixed inset-y-0 left-0 z-30 w-72 border-r border-ink-100 bg-white px-5 py-6 text-ink-900 shadow-xl transition duration-300 lg:static lg:w-72 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed inset-y-0 left-0 z-30 w-72 border-r border-ink-100 bg-white/95 px-5 py-6 text-ink-900 shadow-xl backdrop-blur-xl transition duration-300 lg:static lg:w-72 lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="mb-10 px-2 border-b border-ink-50 pb-6">
-          <p className="font-display text-2xl font-black text-ink-900">LMS Portal</p>
-          <p className="mt-1 text-xs font-black uppercase tracking-widest text-brand-600 italic">Leave Management System</p>
+          <p className="font-display text-2xl font-black text-ink-900">Leave Portal</p>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-600">Unified leave ops</p>
         </div>
 
         <nav className="space-y-1.5">

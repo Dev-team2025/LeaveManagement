@@ -42,15 +42,19 @@ export function AppDataProvider({ children }) {
         hrService.getEmployees(axiosInstance).catch(() => []),
       ])
 
+      const safeHrRequests = Array.isArray(hrRequests) ? hrRequests : []
+      const safeEmpLeaves = Array.isArray(empLeaves) ? empLeaves : []
+      const safeEmployees = Array.isArray(allEmployees) ? allEmployees : []
+
       // Set employees for selectors
-      setEmployees(allEmployees)
+      setEmployees(safeEmployees)
 
       // Combine and deduplicate requests
       // For HR role, hrRequests will have all requests. For others, empLeaves will have theirs.
-      const allRequests = hrRequests.length > 0 ? hrRequests : empLeaves
+      const allRequests = safeHrRequests.length > 0 ? safeHrRequests : safeEmpLeaves
       
       // Map backend fields to the frontend fields expected by the original UI
-      const mappedRequests = allRequests.map(r => ({
+      const mappedRequests = allRequests.map((r) => ({
         id: r.id,
         employeeId: r.employeeId || r.userId,
         leaveType: r.type || r.leaveType,

@@ -62,6 +62,7 @@ function AppRoutes() {
             <Route element={<EmployeeLayoutWrapper />}>
               <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
               <Route path="/employee/my-leaves" element={<MyLeaves />} />
+              <Route path="/employee/leave-history" element={<MyLeaves />} />
               <Route path="/employee/apply-leave" element={<ApplyLeave />} />
               <Route path="/employee/profile" element={<Profile />} />
             </Route>

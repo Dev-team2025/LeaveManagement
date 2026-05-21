@@ -1,11 +1,13 @@
 function Navbar({ profile, onToggleSidebar }) {
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' })
+
   return (
-    <header className="sticky top-0 z-10 flex items-center justify-between gap-4 rounded-[28px] border border-white/70 bg-white/80 px-4 py-4 shadow-panel backdrop-blur-xl lg:px-6">
+    <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border border-white/60 bg-white/85 px-4 py-4 shadow-panel backdrop-blur-xl lg:px-8">
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="rounded-2xl bg-ink-100 p-3 text-ink-700 lg:hidden"
+          className="rounded-2xl bg-ink-100 p-3 text-ink-700 transition hover:bg-ink-200 lg:hidden"
           aria-label="Toggle sidebar"
         >
           <span className="block h-0.5 w-5 bg-current" />
@@ -13,22 +15,24 @@ function Navbar({ profile, onToggleSidebar }) {
           <span className="mt-1 block h-0.5 w-5 bg-current" />
         </button>
         <div>
-          <p className="text-xs uppercase tracking-[0.24em] text-brand-600">Leave Management System</p>
-          <h1 className="font-display text-2xl font-semibold text-ink-900">Employee Workspace</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-600">Leave Portal</p>
+          <h1 className="font-display text-xl font-semibold text-ink-900">Workspace</h1>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <button type="button" className="relative rounded-2xl bg-ink-100 p-3 text-ink-600">
-          <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500" />
-          <span className="text-sm font-bold">!</span>
-        </button>
-        <div className="hidden text-right sm:block">
-          <p className="text-sm font-semibold text-ink-900">{profile?.name}</p>
-          <p className="text-xs uppercase tracking-[0.2em] text-ink-400">{profile?.role}</p>
+      <div className="flex items-center gap-4">
+        <div className="hidden rounded-2xl bg-ink-50 px-4 py-2 text-right sm:block">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-ink-400">{today}</p>
+          <p className="text-sm font-semibold text-ink-900">{profile?.department || 'Department'}</p>
         </div>
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-600 font-semibold text-white">
-          {profile?.avatar}
+        <div className="flex items-center gap-3 rounded-2xl bg-ink-50 px-3 py-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-600 text-sm font-semibold text-white">
+            {profile?.avatar || (profile?.name ? profile.name.slice(0, 2).toUpperCase() : 'ME')}
+          </div>
+          <div className="hidden text-right sm:block">
+            <p className="text-sm font-semibold text-ink-900">{profile?.name || 'Employee'}</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-ink-500">{profile?.role || 'Employee'}</p>
+          </div>
         </div>
       </div>
     </header>
