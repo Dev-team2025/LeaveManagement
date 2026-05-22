@@ -46,29 +46,21 @@ export function AppDataProvider({ children }) {
         managerService.getTeamMembers(axiosInstance).catch(() => []),
       ])
 
-      // Combine employees and deduplicate
-      const combinedEmployees = [...allEmployees]
-      managerTeam.forEach(mt => {
-        if (!combinedEmployees.find(ce => ce.id === mt.id)) {
-          combinedEmployees.push(mt)
-        }
-      })
-      setEmployees(combinedEmployees)
+
+      const safeHrRequests = Array.isArray(hrRequests) ? hrRequests : []
+      const safeEmpLeaves = Array.isArray(empLeaves) ? empLeaves : []
+      const safeEmployees = Array.isArray(allEmployees) ? allEmployees : []
+
+      // Set employees for selectors
+      setEmployees(safeEmployees)
 
       // Combine and deduplicate requests
-      const allRequests = [...hrRequests, ...empLeaves, ...managerLeaves]
-      const uniqueRequests = []
-      const seenIds = new Set()
-      
-      allRequests.forEach(r => {
-        if (r && r.id && !seenIds.has(r.id)) {
-          seenIds.add(r.id)
-          uniqueRequests.push(r)
-        }
-      })
+      // For HR role, hrRequests will have all requests. For others, empLeaves will have theirs.
+      const allRequests = safeHrRequests.length > 0 ? safeHrRequests : safeEmpLeaves
       
       // Map backend fields to the frontend fields expected by the original UI
-      const mappedRequests = uniqueRequests.map(r => ({
+      const mappedRequests = allRequests.map((r) => ({
+
         id: r.id,
         employeeId: r.employeeId || r.userId,
         leaveType: r.type || r.leaveType,

@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import InputField from '@/modules/employee/components/InputField'
+import { Button, Toast } from '@/components/common'
 import useAxios from '@/hooks/useAxios'
 import employeeService from '@/modules/employee/services/employeeService'
 import { useAppData } from '@/context/AppDataContext'
@@ -13,7 +14,7 @@ const initialValues = {
   reason: '',
 }
 
-function LeaveForm() {
+function LeaveForm({ balances = [] }) {
   const axiosInstance = useAxios()
   const { applyLeave } = useAppData()
   const { user } = useAuth()
@@ -22,7 +23,8 @@ function LeaveForm() {
   const [attachment, setAttachment] = useState(null)
   const [errors, setErrors] = useState({})
   const [leaveTypes, setLeaveTypes] = useState([])
-  const [successMessage, setSuccessMessage] = useState('')
+  const [isSubmitting, setSubmitting] = useState(false)
+  const [toast, setToast] = useState(null)
 
   const selectedTile = useMemo(() => {
     if (!dashboard.leaveTiles) return null
@@ -112,25 +114,31 @@ function LeaveForm() {
   const handleSubmit = async (event) => {
     event.preventDefault()
 
+    if (isSubmitting) return
+
     if (!validate()) {
-      setSuccessMessage('')
       return
     }
 
     try {
+      setSubmitting(true)
       const payload = {
         ...values,
         attachmentUrl: attachment?.data || null,
         attachmentName: attachment?.name || null,
       }
       const response = await applyLeave(user?.id, payload)
-      setSuccessMessage(response.message || 'Leave request submitted successfully.')
+      setToast({ variant: 'success', message: response.message || 'Leave request submitted successfully.' })
     } catch (submitError) {
-      setSuccessMessage('')
+      setToast({
+        variant: 'error',
+        message: submitError.response?.data?.message || 'Unable to submit leave request.',
+      })
       setErrors((current) => ({
         ...current,
         form: submitError.response?.data?.message || 'Unable to submit leave request.',
       }))
+      setSubmitting(false)
       return
     }
     setValues((current) => ({
@@ -139,15 +147,29 @@ function LeaveForm() {
     }))
     setAttachment(null)
     setErrors({})
+    setSubmitting(false)
   }
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <Toast
+        message={toast?.message}
+        variant={toast?.variant}
+        onClose={() => setToast(null)}
+      />
       {/* Left Column: Form and Details */}
       <div className="lg:col-span-2 space-y-6">
         <form className="rounded-[32px] border border-ink-100 bg-white p-6 shadow-panel lg:p-8" onSubmit={handleSubmit}>
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-ink-900">Leave Details</h3>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-ink-900">Leave Details</h3>
+                <p className="mt-1 text-xs text-ink-500">Fields marked with * are required.</p>
+              </div>
+              <div className="rounded-2xl bg-ink-50 px-4 py-2 text-xs font-semibold text-ink-500">
+                {balances.length} balances tracked
+              </div>
+            </div>
             
             <div className="grid gap-5 md:grid-cols-2">
               <InputField
@@ -180,24 +202,11 @@ function LeaveForm() {
             </div>
 
             {/* Total Days Requested Box */}
-            <div className="flex flex-col space-y-3 rounded-2xl bg-brand-50 p-6">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-ink-700">Total Days Requested</span>
-                <span className="text-3xl font-semibold text-brand-600">{daysRequested} days</span>
-              </div>
-              {isLOP && !successMessage && (
-                <div className="text-xs p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-100 font-bold flex items-center gap-2">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  This request includes {unpaidDays} day(s) as Loss of Pay (LOP)
-                </div>
-              )}
-              {successMessage && (
-                <div className={`text-sm p-3 rounded-lg ${successMessage.includes('Loss of Pay') ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}`}>
-                  {successMessage}
-                </div>
-              )}
+
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-brand-50 p-6">
+              <span className="text-sm font-medium text-ink-700">Total Days Requested</span>
+              <span className="text-3xl font-semibold text-brand-600">{daysRequested} days</span>
+
             </div>
 
             <InputField
@@ -256,23 +265,23 @@ function LeaveForm() {
             </div>
 
             <div className="flex items-center gap-4 pt-4">
-              <button type="button" className="flex-1 rounded-2xl border border-ink-200 bg-ink-50 px-6 py-4 text-sm font-semibold text-ink-900 transition hover:bg-ink-100">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setValues({ ...initialValues, leaveType: leaveTypes[0] || values.leaveType })
+                  setAttachment(null)
+                  setErrors({})
+                }}
+              >
                 Cancel
-              </button>
-              <button type="submit" className="flex-[2] flex items-center justify-center gap-2 rounded-2xl bg-brand-600 px-6 py-4 text-sm font-semibold text-white transition hover:bg-brand-700 shadow-lg shadow-brand-200">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
+              </Button>
+              <Button type="submit" className="flex-[2]" loading={isSubmitting}>
                 Submit Leave Request
-              </button>
+              </Button>
             </div>
           </div>
-
-          {successMessage ? (
-            <div className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
-              {successMessage}
-            </div>
-          ) : null}
           {errors.form ? (
             <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-danger-500">
               {errors.form}

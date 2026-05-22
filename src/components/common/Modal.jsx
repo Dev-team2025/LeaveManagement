@@ -28,7 +28,7 @@ function Modal({ isOpen, title, onClose, children }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className="w-full max-w-lg rounded-[28px] bg-white p-6 shadow-panel"
+        className="w-full max-w-lg rounded-[24px] border border-ink-100 bg-white p-6 shadow-panel"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
@@ -38,7 +38,7 @@ function Modal({ isOpen, title, onClose, children }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full bg-ink-100 px-3 py-1 text-sm font-medium text-ink-700 transition hover:bg-ink-200"
+            className="rounded-full bg-ink-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-600 transition hover:bg-ink-200"
           >
             Close
           </button>

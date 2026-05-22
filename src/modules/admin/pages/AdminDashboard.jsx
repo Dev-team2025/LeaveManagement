@@ -39,9 +39,9 @@ export default function AdminDashboard() {
     <section className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#1D4ED8]">Admin Workspace</p>
-          <h1 className="mt-1 text-2xl font-semibold text-[#0F172A]">System Overview</h1>
-          <p className="mt-0.5 text-sm text-[#64748B]">Platform-wide stats and quick access to admin tools</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600">Admin Workspace</p>
+            <h1 className="mt-1 text-2xl font-semibold text-ink-900">System Overview</h1>
+            <p className="mt-0.5 text-sm text-ink-500">Platform-wide stats and quick access to admin tools</p>
         </div>
       </div>
 
@@ -54,8 +54,8 @@ export default function AdminDashboard() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Role Breakdown */}
-        <div className="rounded-[20px] border border-[#E5E7EB] bg-white p-6">
-          <p className="mb-5 font-semibold text-[#0F172A]">Users by Role</p>
+        <div className="rounded-[24px] border border-ink-100 bg-white p-6 shadow-panel">
+          <p className="mb-5 font-semibold text-ink-900">Users by Role</p>
           <div className="space-y-3">
             {roleBreakdown.map(({ role, count }) => {
               const pct = Math.round((count / employees.length) * 100)
@@ -64,11 +64,11 @@ export default function AdminDashboard() {
                 <div key={role} className="flex items-center gap-4">
                   <span className={`w-24 shrink-0 rounded-full px-2.5 py-0.5 text-center text-xs font-semibold capitalize ${color}`}>{role}</span>
                   <div className="flex-1">
-                    <div className="h-2 w-full rounded-full bg-[#F1F5F9]">
-                      <div className="h-2 rounded-full bg-[#1D4ED8]" style={{ width: `${pct}%` }} />
+                    <div className="h-2 w-full rounded-full bg-ink-50">
+                      <div className="h-2 rounded-full bg-brand-600" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
-                  <span className="w-8 shrink-0 text-right text-sm font-semibold text-[#334155]">{count}</span>
+                  <span className="w-8 shrink-0 text-right text-sm font-semibold text-ink-700">{count}</span>
                 </div>
               )
             })}
@@ -76,8 +76,8 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="rounded-[20px] border border-[#E5E7EB] bg-white p-6">
-          <p className="mb-5 font-semibold text-[#0F172A]">Quick Actions</p>
+        <div className="rounded-[24px] border border-ink-100 bg-white p-6 shadow-panel">
+          <p className="mb-5 font-semibold text-ink-900">Quick Actions</p>
           <div className="grid grid-cols-1 gap-3">
             {[
               { label: 'Manage Users', desc: 'Add, update or deactivate user accounts', to: '/admin/users', color: '#1D4ED8', bg: '#EFF6FF' },
@@ -86,7 +86,7 @@ export default function AdminDashboard() {
               <Link key={item.to} to={item.to} className="flex items-start gap-3 rounded-xl p-4 transition hover:opacity-90" style={{ backgroundColor: item.bg }}>
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold" style={{ color: item.color }}>{item.label}</p>
-                  <p className="mt-0.5 text-xs text-[#64748B]">{item.desc}</p>
+                  <p className="mt-0.5 text-xs text-ink-500">{item.desc}</p>
                 </div>
                 <span style={{ color: item.color }}>→</span>
               </Link>

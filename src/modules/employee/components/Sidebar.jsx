@@ -37,6 +37,15 @@ function LeavesIcon({ className = '' }) {
   )
 }
 
+function HistoryIcon({ className = '' }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  )
+}
+
 function ProfileIcon({ className = '' }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -74,7 +83,7 @@ function Sidebar({ isOpen, onClose }) {
       { label: 'Dashboard', to: '/employee/dashboard', icon: DashboardIcon },
       { label: 'Apply Leave', to: '/employee/apply-leave', icon: ApplyIcon },
       { label: 'My Leaves', to: '/employee/my-leaves', icon: LeavesIcon },
-      
+      { label: 'Leave History', to: '/employee/leave-history', icon: HistoryIcon },
       { label: 'Profile', to: '/employee/profile', icon: ProfileIcon },
     ],
     [],
@@ -95,11 +104,11 @@ function Sidebar({ isOpen, onClose }) {
         }`}
       >
         <div className="mb-8">
-          <p className="text-lg font-display font-semibold text-brand-600">Leave Portal</p>
-          <p className="mt-1 text-sm text-ink-500">Employee Management</p>
+          <p className="text-lg font-display font-semibold text-ink-900">Leave Portal</p>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.28em] text-brand-600">Employee workspace</p>
         </div>
 
-        <nav className="space-y-3">
+        <nav className="space-y-2">
           {links.map((link) => {
             const Icon = link.icon
             return (
@@ -109,7 +118,9 @@ function Sidebar({ isOpen, onClose }) {
                 onClick={onClose}
                 className={({ isActive }) =>
                   `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-                    isActive ? 'bg-brand-600 !text-white' : 'text-ink-600 hover:bg-white hover:text-ink-900'
+                    isActive
+                      ? 'bg-brand-600 text-white shadow-lg shadow-brand-200'
+                      : 'text-ink-600 hover:bg-white hover:text-ink-900'
                   }`
                 }
               >

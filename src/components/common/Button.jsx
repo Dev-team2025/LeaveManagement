@@ -1,8 +1,9 @@
 const variantClasses = {
-  primary: 'bg-brand-600 text-white hover:bg-brand-700 focus-visible:outline-brand-600',
+  primary: 'bg-brand-600 text-white hover:bg-brand-700 focus-visible:outline-brand-600 shadow-sm shadow-brand-200/60',
   secondary: 'bg-white text-ink-900 ring-1 ring-ink-200 hover:bg-ink-50 focus-visible:outline-brand-600',
+  outline: 'bg-transparent text-ink-900 ring-1 ring-ink-200 hover:bg-white/70 focus-visible:outline-brand-600',
   danger: 'bg-danger-500 text-white hover:bg-red-700 focus-visible:outline-danger-500',
-  ghost: 'bg-transparent text-ink-700 hover:bg-white/70 focus-visible:outline-brand-600',
+  ghost: 'bg-transparent text-ink-700 hover:bg-ink-100 focus-visible:outline-brand-600',
 }
 
 const sizeClasses = {

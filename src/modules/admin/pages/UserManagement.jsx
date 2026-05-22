@@ -39,9 +39,9 @@ export default function UserManagement() {
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#1D4ED8]">Admin Workspace</p>
-        <h1 className="mt-1 text-2xl font-semibold text-[#0F172A]">User Management</h1>
-        <p className="mt-0.5 text-sm text-[#64748B]">View and manage all employee accounts and roles</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-600">Admin Workspace</p>
+        <h1 className="mt-1 text-2xl font-semibold text-ink-900">User Management</h1>
+        <p className="mt-0.5 text-sm text-ink-500">View and manage all employee accounts and roles</p>
       </div>
 
       {/* Filters */}
@@ -52,7 +52,7 @@ export default function UserManagement() {
               key={r}
               onClick={() => setRoleFilter(r)}
               className={`shrink-0 rounded-lg px-3.5 py-2 text-xs font-semibold capitalize transition ${
-                roleFilter === r ? 'bg-[#1D4ED8] text-white' : 'bg-white border border-[#E5E7EB] text-[#64748B] hover:bg-[#F8F9FC]'
+                roleFilter === r ? 'bg-brand-600 text-white' : 'bg-white border border-ink-100 text-ink-500 hover:bg-ink-50'
               }`}
             >
               {r}
@@ -64,37 +64,41 @@ export default function UserManagement() {
           placeholder="Search by name or email…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl border border-[#E5E7EB] bg-white px-4 py-2.5 text-sm text-[#334155] placeholder-[#94A3B8] outline-none focus:border-[#1D4ED8] focus:ring-2 focus:ring-[#1D4ED8]/10 sm:w-72"
+          className="w-full rounded-xl border border-ink-100 bg-white px-4 py-2.5 text-sm text-ink-700 placeholder-ink-400 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 sm:w-72"
         />
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-[16px] border border-[#E5E7EB] bg-white">
-        <table className="min-w-full divide-y divide-[#F1F5F9] text-sm">
+      <div className="overflow-x-auto rounded-[20px] border border-ink-100 bg-white">
+        <table className="min-w-full divide-y divide-ink-50 text-sm">
           <thead>
-            <tr className="bg-[#F8F9FC]">
-              {['Employee', 'ID', 'Department', 'Salary', 'Role', 'Status', 'Actions'].map((h) => (
-                <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-[#64748B]">{h}</th>
+
+            <tr className="bg-ink-50">
+              {['Employee', 'ID', 'Department', 'Designation', 'Role', 'Status', 'Actions'].map((h) => (
+                <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-ink-500">{h}</th>
+
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#F1F5F9]">
+          <tbody className="divide-y divide-ink-50">
             {filtered.map((emp) => (
-              <tr key={emp.id} className="transition-colors hover:bg-[#F8F9FC]">
+              <tr key={emp.id} className="transition-colors hover:bg-ink-50">
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EFF6FF] text-xs font-semibold text-[#1D4ED8]">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-600">
                       {emp.avatar}
                     </div>
                     <div>
-                      <p className="font-medium text-[#0F172A]">{emp.name}</p>
-                      <p className="text-xs text-[#94A3B8]">{emp.email}</p>
+                      <p className="font-medium text-ink-900">{emp.name}</p>
+                      <p className="text-xs text-ink-400">{emp.email}</p>
                     </div>
                   </div>
                 </td>
-                <td className="px-5 py-4 text-xs font-mono text-[#64748B]">{emp.id}</td>
-                <td className="px-5 py-4 text-[#334155]">{emp.department}</td>
-                <td className="px-5 py-4 text-[#334155]">₹{emp.baseSalary || 0}</td>
+
+                <td className="px-5 py-4 text-xs font-mono text-ink-500">{emp.id}</td>
+                <td className="px-5 py-4 text-ink-700">{emp.department}</td>
+                <td className="px-5 py-4 text-ink-700">{emp.designation}</td>
+
                 <td className="px-5 py-4">
                   <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${ROLE_COLORS[emp.role] || 'bg-slate-100 text-slate-600'}`}>
                     {emp.role}
@@ -106,7 +110,7 @@ export default function UserManagement() {
                   </span>
                 </td>
                 <td className="px-5 py-4">
-                  <button onClick={() => openEdit(emp)} className="rounded-lg border border-[#E5E7EB] px-3 py-1.5 text-xs font-semibold text-[#64748B] hover:bg-[#F8F9FC] transition">
+                  <button onClick={() => openEdit(emp)} className="rounded-lg border border-ink-100 px-3 py-1.5 text-xs font-semibold text-ink-500 hover:bg-ink-50 transition">
                     Edit
                   </button>
                 </td>
@@ -121,32 +125,32 @@ export default function UserManagement() {
         {editModal && (
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#334155]">Role</label>
+              <label className="mb-1.5 block text-sm font-medium text-ink-700">Role</label>
               <select
                 value={editForm.role}
                 onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value }))}
-                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-4 py-2.5 text-sm text-[#334155] outline-none focus:border-[#1D4ED8] focus:ring-2 focus:ring-[#1D4ED8]/10"
+                className="w-full rounded-xl border border-ink-100 bg-white px-4 py-2.5 text-sm text-ink-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
               >
                 {ROLES_LIST.map((r) => <option key={r} value={r} className="capitalize">{r}</option>)}
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#334155]">Status</label>
+              <label className="mb-1.5 block text-sm font-medium text-ink-700">Status</label>
               <select
                 value={editForm.status}
                 onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
-                className="w-full rounded-xl border border-[#E5E7EB] bg-white px-4 py-2.5 text-sm text-[#334155] outline-none focus:border-[#1D4ED8] focus:ring-2 focus:ring-[#1D4ED8]/10"
+                className="w-full rounded-xl border border-ink-100 bg-white px-4 py-2.5 text-sm text-ink-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-[#334155]">Designation</label>
+              <label className="mb-1.5 block text-sm font-medium text-ink-700">Designation</label>
               <input
                 value={editForm.designation}
                 onChange={(e) => setEditForm((f) => ({ ...f, designation: e.target.value }))}
-                className="w-full rounded-xl border border-[#E5E7EB] px-4 py-2.5 text-sm text-[#334155] outline-none focus:border-[#1D4ED8] focus:ring-2 focus:ring-[#1D4ED8]/10"
+                className="w-full rounded-xl border border-ink-100 px-4 py-2.5 text-sm text-ink-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
               />
             </div>
             <div>
@@ -159,8 +163,8 @@ export default function UserManagement() {
               />
             </div>
             <div className="flex gap-3">
-              <button onClick={saveEdit} className="flex-1 rounded-xl bg-[#1D4ED8] py-2.5 text-sm font-semibold text-white hover:bg-[#1E40AF] transition">Save Changes</button>
-              <button onClick={() => setEditModal(null)} className="flex-1 rounded-xl border border-[#E5E7EB] py-2.5 text-sm font-semibold text-[#64748B] hover:bg-[#F8F9FC]">Cancel</button>
+              <button onClick={saveEdit} className="flex-1 rounded-xl bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 transition">Save Changes</button>
+              <button onClick={() => setEditModal(null)} className="flex-1 rounded-xl border border-ink-100 py-2.5 text-sm font-semibold text-ink-500 hover:bg-ink-50">Cancel</button>
             </div>
           </div>
         )}
