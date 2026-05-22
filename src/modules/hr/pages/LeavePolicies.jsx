@@ -188,7 +188,7 @@ export default function LeavePolicies() {
       </div>
 
       <div className="mt-16 text-center text-xs text-ink-400 border-t border-ink-100 pt-8">
-        © 2024 Leave Portal • Corporate Human Resources Policy
+        © {new Date().getFullYear()} Leave Portal • Corporate Human Resources Policy
       </div>
     </section>
   )
