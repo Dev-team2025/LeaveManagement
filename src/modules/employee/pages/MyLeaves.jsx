@@ -41,8 +41,8 @@ function MyLeaves() {
         const end = new Date(leave.toDate).getTime()
         const from = dateFrom ? new Date(dateFrom).getTime() : null
         const to = dateTo ? new Date(dateTo).getTime() : null
-        if (from && end < from) return false
-        if (to && start > to) return false
+        if (from !== null && end < from) return false
+        if (to !== null && start > to) return false
         return true
       })
       .sort((a, b) => new Date(b.createdAt || b.fromDate) - new Date(a.createdAt || a.fromDate))

@@ -245,7 +245,7 @@ export default function EmployeeDashboard() {
               <p className="text-sm font-semibold text-ink-900">Upcoming Leaves</p>
               <p className="text-xs text-ink-500">Your next scheduled time off</p>
             </div>
-            <Link to="/employee/my-leaves" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
+            <Link to="/employee/leave-history" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
               View all
             </Link>
           </div>
@@ -295,7 +295,7 @@ export default function EmployeeDashboard() {
               Apply Leave
               <span className="text-brand-600">→</span>
             </Link>
-            <Link to="/employee/my-leaves" className="flex items-center justify-between rounded-2xl border border-ink-100 bg-white px-4 py-3 text-sm font-semibold text-ink-900 transition hover:bg-ink-50">
+            <Link to="/employee/leave-history" className="flex items-center justify-between rounded-2xl border border-ink-100 bg-white px-4 py-3 text-sm font-semibold text-ink-900 transition hover:bg-ink-50">
               View Leave History
               <span className="text-brand-600">→</span>
             </Link>
@@ -317,7 +317,7 @@ export default function EmployeeDashboard() {
             <p className="text-sm font-semibold text-ink-900">Recent Requests</p>
             <p className="text-xs text-ink-500">Latest leave requests and statuses</p>
           </div>
-          <Link to="/employee/my-leaves" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
+          <Link to="/employee/leave-history" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
             View all
           </Link>
         </div>
