@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, trim: true, default: '' },
     location: { type: String, trim: true, default: '' },
     managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    baseSalary: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true },

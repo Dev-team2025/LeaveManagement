@@ -52,6 +52,8 @@ hrRouter.get('/requests', async (_req, res) => {
       decisionReason: row.decisionReason || '',
       attachmentUrl: row.attachmentUrl,
       attachmentName: row.attachmentName,
+      isPaid: row.isPaid !== false,
+      deductionAmount: row.deductionAmount || 0,
     })),
   )
 })
@@ -116,6 +118,7 @@ hrRouter.get('/employees', async (_req, res) => {
       role: u.role,
       email: u.email,
       isActive: u.isActive,
+      baseSalary: u.baseSalary || 0,
     })),
   )
 })
@@ -126,6 +129,7 @@ hrRouter.post('/employees', async (req, res) => {
   const role = String(req.body?.role || '').trim().toLowerCase()
   const department = String(req.body?.department || '').trim()
   const password = String(req.body?.password || '').trim()
+  const baseSalary = Number(req.body?.baseSalary) || 0
 
   if (!name || !email || !role || !password) {
     return res.status(400).json({ message: 'name, email, role, and password are required.' })
@@ -140,6 +144,7 @@ hrRouter.post('/employees', async (req, res) => {
     department,
     passwordHash,
     isActive: true,
+    baseSalary,
   })
 
   return res.status(201).json({ user: created.toJSON() })
@@ -148,7 +153,7 @@ hrRouter.post('/employees', async (req, res) => {
 hrRouter.put('/employees/:id', async (req, res) => {
   const id = req.params.id
   const patch = {}
-  for (const key of ['name', 'department', 'phone', 'location', 'role', 'isActive']) {
+  for (const key of ['name', 'department', 'phone', 'location', 'role', 'isActive', 'baseSalary']) {
     if (req.body?.[key] !== undefined) patch[key] = req.body[key]
   }
 

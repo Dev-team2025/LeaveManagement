@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { StatCard, Badge } from '@/components/common'
+import { StatCard, Badge, Loader } from '@/components/common'
 import { useAppData } from '@/context/AppDataContext'
 import useAuth from '@/hooks/useAuth'
-import { getEmployeeById } from '@/data/mockData'
+import useManagerDashboard from '@/modules/manager/hooks/useManagerDashboard'
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const ICONS = {
@@ -30,9 +30,12 @@ function formatDate(d) {
 }
 
 export default function ManagerDashboard() {
-  const { leaveRequests, employees, notifications, approveLeave } = useAppData()
+  const { leaveRequests, employees, notifications, isLoading: appLoading } = useAppData()
   const { user } = useAuth()
-  const managerId = user?.id || 'EMP003'
+  const { cards = [], teamStats = {}, isLoading: dashLoading } = useManagerDashboard()
+  const managerId = user?.id
+
+  const isLoading = appLoading || dashLoading
 
   const teamEmployees = useMemo(
     () => employees.filter((e) => e.managerId === managerId),
@@ -46,17 +49,21 @@ export default function ManagerDashboard() {
 
   const stats = useMemo(() => {
     const today = new Date().toISOString().split('T')[0]
+    const approved = teamRequests.filter(r => r.status === 'approved')
+    
+    // Use card values from backend for consistency
+    const teamAwayCard = (cards || []).find(c => c.id === 'team-away')?.value || 0
+    const pendingCard = (cards || []).find(c => c.id === 'pending')?.value || 0
+
     return {
-      teamSize: teamEmployees.length,
-      pending: teamRequests.filter((r) => r.status === 'pending').length,
-      onLeaveToday: teamRequests.filter((r) =>
-        r.status === 'approved' &&
-        r.fromDate <= today &&
-        r.toDate >= today
-      ).length,
-      upcoming: teamRequests.filter((r) => r.status === 'approved' && r.fromDate > today).length,
+      teamSize: (teamEmployees || []).length,
+      pending: pendingCard,
+      onLeaveToday: teamAwayCard,
+      upcoming: (approved || []).filter((r) => r.fromDate > today).length,
+      unpaidCount: teamStats?.unpaidCount || 0,
+      totalDeductions: teamStats?.totalDeductions || 0
     }
-  }, [teamEmployees, teamRequests])
+  }, [teamEmployees, teamRequests, cards, teamStats])
 
   const pendingRequests = useMemo(
     () => teamRequests.filter(r => r.status === 'pending').sort((a, b) => new Date(b.appliedOn) - new Date(a.appliedOn)).slice(0, 5),
@@ -64,7 +71,7 @@ export default function ManagerDashboard() {
   )
 
   const unreadCount = useMemo(
-    () => notifications.filter((n) => n.recipientId === (user?.id || 'EMP003') && !n.isRead).length,
+    () => notifications.filter((n) => n.recipientId === user?.id && !n.isRead).length,
     [notifications, user],
   )
 
@@ -72,6 +79,8 @@ export default function ManagerDashboard() {
     if (!name) return ''
     return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
   }
+
+  if (isLoading) return <div className="flex h-96 items-center justify-center"><Loader /></div>
 
   return (
     <section className="space-y-8 pb-20">
@@ -147,8 +156,8 @@ export default function ManagerDashboard() {
             </div>
           </div>
           <div className="mt-5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-ink-400">Upcoming Absences</p>
-            <h3 className="mt-1 text-3xl font-black text-ink-900">{stats.upcoming}</h3>
+            <p className="text-[10px] font-black uppercase tracking-widest text-ink-400">Loss of Pay (LOP)</p>
+            <h3 className="mt-1 text-3xl font-black text-ink-900">{stats.unpaidCount} <span className="text-sm text-ink-400 font-bold">Requests</span></h3>
           </div>
         </div>
       </div>
@@ -172,7 +181,7 @@ export default function ManagerDashboard() {
               </div>
             ) : (
               pendingRequests.map((req) => {
-                const emp = getEmployeeById(req.employeeId)
+                const emp = employees.find(e => e.id === req.employeeId)
                 return (
                   <div key={req.id} className="group relative flex flex-col gap-6 overflow-hidden rounded-[32px] border border-ink-50 bg-white p-6 shadow-sm transition hover:shadow-xl hover:border-brand-200 sm:flex-row sm:items-center">
                     <div className="flex items-center gap-5 flex-1">
@@ -215,60 +224,39 @@ export default function ManagerDashboard() {
           </div>
         </div>
 
-        {/* Team Presence Side Panel */}
+        {/* Team Leave Summary */}
         <div className="space-y-6">
-          <h2 className="text-xl font-black text-ink-900 uppercase tracking-tight">Team Health</h2>
-          <div className="rounded-[40px] border border-ink-100 bg-white p-8 shadow-panel relative overflow-hidden">
-            <div className="space-y-6 relative z-10">
-              {teamEmployees.map((emp) => {
-                const today = new Date().toISOString().split('T')[0]
-                const activeLeave = leaveRequests.find(
-                  (r) => r.employeeId === emp.id && r.status === 'approved' &&
-                    r.fromDate <= today && r.toDate >= today,
-                )
-
-                return (
-                  <div key={emp.id} className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-ink-50 text-xs font-black text-ink-900 border border-ink-100 shadow-sm transition hover:scale-105">
-                        {emp.avatar || initials(emp.name)}
+          <h2 className="text-xl font-black text-ink-900 uppercase tracking-tight">Team Overview</h2>
+          <div className="rounded-[32px] border border-ink-100 bg-white p-6 shadow-panel">
+            <div className="space-y-6">
+              {teamEmployees.length === 0 ? (
+                <p className="text-sm font-bold text-ink-400 text-center py-10">No direct reports found.</p>
+              ) : (
+                teamEmployees.map(emp => {
+                  const empRequests = teamRequests.filter(r => r.employeeId === emp.id && r.status === 'approved')
+                  const unpaidDays = empRequests.filter(r => !r.isPaid).reduce((sum, r) => sum + r.days, 0)
+                  return (
+                    <div key={emp.id} className="flex items-center justify-between group">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink-50 text-ink-600 font-black text-xs">
+                          {initials(emp.name)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-ink-900 leading-none">{emp.name}</p>
+                          <p className="text-[10px] font-bold text-ink-400 mt-1 uppercase tracking-wider">{emp.designation || 'Team Member'}</p>
+                        </div>
                       </div>
-                      <span className={`absolute -right-1.5 -bottom-1.5 h-4 w-4 rounded-full border-4 border-white ${activeLeave ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+                      <div className="text-right">
+                        <p className="text-xs font-black text-ink-900">{empRequests.length} Leaves</p>
+                        {unpaidDays > 0 && (
+                          <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mt-1">{unpaidDays} Days LOP</p>
+                        )}
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-ink-900 leading-tight">{emp.name}</p>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-ink-400 mt-1">{emp.designation}</p>
-                    </div>
-                  </div>
-                )
-              })}
+                  )
+                })
+              )}
             </div>
-
-            <div className="mt-10 pt-8 border-t border-ink-50 relative z-10">
-              <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-ink-300">
-                <span>Capacity Level</span>
-                <span>{Math.round((teamEmployees.length - stats.onLeaveToday) / (teamEmployees.length || 1) * 100)}% ACTIVE</span>
-              </div>
-              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-ink-50">
-                <div
-                  className="h-full bg-brand-600 rounded-full transition-all duration-1000 shadow-sm shadow-brand-100"
-                  style={{ width: `${(teamEmployees.length - stats.onLeaveToday) / (teamEmployees.length || 1) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="absolute right-0 top-0 h-32 w-32 bg-brand-50 rounded-full -translate-y-16 translate-x-16 blur-3xl opacity-50"></div>
-          </div>
-
-          <div className="rounded-[40px] bg-brand-600 p-8 shadow-xl shadow-brand-100 text-white relative overflow-hidden group">
-            <div className="relative z-10">
-              <h3 className="text-lg font-black uppercase tracking-tight">Need a full view?</h3>
-              <p className="mt-1 text-sm font-medium text-brand-100 leading-relaxed">Access the interactive team calendar for visual planning.</p>
-              <Link to="/manager/team-calendar" className="mt-6 inline-flex h-11 items-center justify-center rounded-2xl bg-white px-6 text-xs font-black !text-black uppercase tracking-widest transition group-hover:scale-105 active:scale-95">
-                Launch Calendar
-              </Link>
-            </div>
-            <div className="absolute -right-4 -bottom-4 h-24 w-24 bg-white/10 rounded-3xl rotate-12 transition group-hover:rotate-45"></div>
           </div>
         </div>
       </div>

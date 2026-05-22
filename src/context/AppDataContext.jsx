@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, useEffect } from 'react'
 import useAxios from '@/hooks/useAxios'
+import { useAuth } from '@/hooks/useAuth'
 import hrService from '@/modules/hr/services/hrService'
 import employeeService from '@/modules/employee/services/employeeService'
 import managerService from '@/modules/manager/services/managerService'
@@ -24,6 +25,7 @@ export const AppDataContext = createContext(undefined)
 
 export function AppDataProvider({ children }) {
   const axiosInstance = useAxios()
+  const { isAuthenticated } = useAuth()
   const [employees, setEmployees] = useState([])
   const [leaveRequests, setLeaveRequests] = useState([])
   const [leaveBalances, setLeaveBalances] = useState([])
@@ -35,12 +37,15 @@ export function AppDataProvider({ children }) {
   const refreshData = useCallback(async () => {
     setLoading(true)
     try {
-      // Fetch all necessary data for the context
-      const [hrRequests, empLeaves, allEmployees] = await Promise.all([
+      // Fetch all necessary data for the context based on roles
+      const [hrRequests, empLeaves, allEmployees, managerLeaves, managerTeam] = await Promise.all([
         hrService.getLeaveRequests(axiosInstance).catch(() => []),
         employeeService.getLeaves(axiosInstance).catch(() => []),
         hrService.getEmployees(axiosInstance).catch(() => []),
+        managerService.getTeamLeaves(axiosInstance).catch(() => []),
+        managerService.getTeamMembers(axiosInstance).catch(() => []),
       ])
+
 
       const safeHrRequests = Array.isArray(hrRequests) ? hrRequests : []
       const safeEmpLeaves = Array.isArray(empLeaves) ? empLeaves : []
@@ -55,6 +60,7 @@ export function AppDataProvider({ children }) {
       
       // Map backend fields to the frontend fields expected by the original UI
       const mappedRequests = allRequests.map((r) => ({
+
         id: r.id,
         employeeId: r.employeeId || r.userId,
         leaveType: r.type || r.leaveType,
@@ -67,7 +73,9 @@ export function AppDataProvider({ children }) {
         reviewedOn: r.decidedAt || r.reviewedOn,
         reviewNote: r.note || r.reviewNote,
         attachmentUrl: r.attachmentUrl,
-        attachmentName: r.attachmentName
+        attachmentName: r.attachmentName,
+        isPaid: r.isPaid !== false,
+        deductionAmount: r.deductionAmount || 0,
       }))
 
       setLeaveRequests(mappedRequests)
@@ -79,8 +87,13 @@ export function AppDataProvider({ children }) {
   }, [axiosInstance])
 
   useEffect(() => {
-    refreshData()
-  }, [refreshData])
+    if (isAuthenticated) {
+      refreshData()
+    } else {
+      setLeaveRequests([])
+      setEmployees([])
+    }
+  }, [refreshData, isAuthenticated])
 
   // ── Actions ─────────────────────────────────────────────────────────────────
 
@@ -135,11 +148,14 @@ export function AppDataProvider({ children }) {
     setEmployees((prev) => [employee, ...prev])
   }, [])
 
-  const updateEmployee = useCallback((employeeId, updates) => {
-    setEmployees((prev) =>
-      prev.map((e) => (e.id === employeeId ? { ...e, ...updates } : e)),
-    )
-  }, [])
+  const updateEmployee = useCallback(async (employeeId, updates) => {
+    try {
+      await hrService.updateEmployee(axiosInstance, employeeId, updates)
+      await refreshData()
+    } catch (err) {
+      console.error('Failed to update employee:', err)
+    }
+  }, [axiosInstance, refreshData])
 
   // ── Selectors ────────────────────────────────────────────────────────────────
 

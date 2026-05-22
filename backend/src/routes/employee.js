@@ -88,6 +88,8 @@ employeeRouter.get('/leaves', async (req, res) => {
       createdAt: row.createdAt,
       attachmentUrl: row.attachmentUrl,
       attachmentName: row.attachmentName,
+      deductionAmount: row.deductionAmount || 0,
+      isPaid: row.isPaid !== false,
     })),
   )
 })
@@ -125,12 +127,17 @@ employeeRouter.post('/leaves', async (req, res) => {
   const holidayDates = holidaysInRange.map((h) => h.date)
 
   const days = countBusinessDays(startDate, endDate, holidayDates)
+  console.log(`Leave Request: ${leaveTypeName}, Days: ${days}, Balance: ${leaveType.maxDaysPerYear}`)
 
   if (days === 0) {
     return res.status(400).json({ message: 'Selected date range contains no business days or is entirely holidays.' })
   }
 
   const settings = await Settings.findOne({ key: 'default' }).lean()
+  let deductionAmount = 0
+  let isPaid = true
+  let message = 'Leave request submitted successfully.'
+
   if (leaveType.isWFH) {
     if (settings?.wfhEmergencyOnly && !isEmergency) {
       return res.status(400).json({ message: 'WFH is allowed only in emergency situations.' })
@@ -152,8 +159,27 @@ employeeRouter.post('/leaves', async (req, res) => {
       leaveTypeId: leaveType._id,
       year,
     })
+
     if (usedDays + days > leaveType.maxDaysPerYear) {
-      return res.status(400).json({ message: 'Leave days exceed available balance.' })
+      const alreadyUsed = usedDays
+      const allowance = leaveType.maxDaysPerYear
+      
+      const paidDaysAvailable = Math.max(0, allowance - alreadyUsed)
+      const currentRequestPaidDays = Math.min(days, paidDaysAvailable)
+      const currentRequestUnpaidDays = days - currentRequestPaidDays
+
+      if (currentRequestUnpaidDays > 0) {
+        isPaid = false
+        // Calculate deduction: (Base Salary / 30) * currentRequestUnpaidDays
+        const dailyRate = (req.user.baseSalary || 0) / 30
+        deductionAmount = Math.round(dailyRate * currentRequestUnpaidDays)
+
+        if (currentRequestUnpaidDays === days) {
+          message = `You have 0 days left in your ${leaveType.name} balance. This entire request for ${days} days will be Loss of Pay (LOP).`
+        } else {
+          message = `You have ${paidDaysAvailable} days left in your ${leaveType.name} balance. This request for ${days} days will have ${currentRequestPaidDays} paid day(s) and ${currentRequestUnpaidDays} Loss of Pay (LOP) day(s).`
+        }
+      }
     }
   }
 
@@ -170,6 +196,8 @@ employeeRouter.post('/leaves', async (req, res) => {
     attachmentUrl: req.body?.attachmentUrl || null,
     attachmentName: req.body?.attachmentName || null,
     status: 'pending',
+    deductionAmount,
+    isPaid,
   })
 
   await Notification.create({
@@ -183,7 +211,7 @@ employeeRouter.post('/leaves', async (req, res) => {
   return res.status(201).json({
     success: true,
     request: doc.toJSON(),
-    message: 'Leave request submitted successfully.',
+    message,
   })
 })
 

@@ -8,7 +8,7 @@ import { Holiday } from './models/Holiday.js'
 
 const DEMO_PASSWORD = 'Password@123'
 
-async function upsertUser({ email, name, role }) {
+async function upsertUser({ email, name, role, baseSalary = 50000 }) {
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10)
   await User.updateOne(
     { email },
@@ -19,6 +19,7 @@ async function upsertUser({ email, name, role }) {
         role,
         passwordHash,
         isActive: true,
+        baseSalary,
       },
     },
     { upsert: true },
@@ -42,6 +43,7 @@ async function main() {
         isActive: true,
         department: 'Engineering',
         designation: 'Engineering Manager',
+        baseSalary: 80000,
       },
     },
     { upsert: true, new: true },
@@ -60,6 +62,7 @@ async function main() {
         department: 'Engineering',
         designation: 'Software Engineer',
         managerId: manager._id,
+        baseSalary: 45000,
       },
     },
     { upsert: true },
@@ -80,19 +83,16 @@ async function main() {
     )
   }
 
-  await LeaveType.updateOne(
-    { code: 'ANNUAL' },
-    { $set: { name: 'Annual Leave', code: 'ANNUAL', maxDaysPerYear: 18, isWFH: false, isActive: true } },
-    { upsert: true },
-  )
+  await LeaveType.deleteOne({ code: 'ANNUAL' })
+
   await LeaveType.updateOne(
     { code: 'SICK' },
-    { $set: { name: 'Sick Leave', code: 'SICK', maxDaysPerYear: 10, isWFH: false, isActive: true } },
+    { $set: { name: 'Sick Leave', code: 'SICK', maxDaysPerYear: 6, isWFH: false, isActive: true } },
     { upsert: true },
   )
   await LeaveType.updateOne(
     { code: 'CASUAL' },
-    { $set: { name: 'Casual Leave', code: 'CASUAL', maxDaysPerYear: 7, isWFH: false, isActive: true } },
+    { $set: { name: 'Casual Leave', code: 'CASUAL', maxDaysPerYear: 6, isWFH: false, isActive: true } },
     { upsert: true },
   )
   await LeaveType.updateOne(

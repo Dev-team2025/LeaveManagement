@@ -22,7 +22,12 @@ export default function UserManagement() {
   )
 
   function openEdit(emp) {
-    setEditForm({ role: emp.role, status: emp.status, designation: emp.designation })
+    setEditForm({
+      role: emp.role,
+      status: emp.status || (emp.isActive ? 'active' : 'inactive'),
+      designation: emp.designation,
+      baseSalary: emp.baseSalary || 0,
+    })
     setEditModal(emp)
   }
 
@@ -67,9 +72,11 @@ export default function UserManagement() {
       <div className="overflow-x-auto rounded-[20px] border border-ink-100 bg-white">
         <table className="min-w-full divide-y divide-ink-50 text-sm">
           <thead>
+
             <tr className="bg-ink-50">
               {['Employee', 'ID', 'Department', 'Designation', 'Role', 'Status', 'Actions'].map((h) => (
                 <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-ink-500">{h}</th>
+
               ))}
             </tr>
           </thead>
@@ -87,9 +94,11 @@ export default function UserManagement() {
                     </div>
                   </div>
                 </td>
+
                 <td className="px-5 py-4 text-xs font-mono text-ink-500">{emp.id}</td>
                 <td className="px-5 py-4 text-ink-700">{emp.department}</td>
                 <td className="px-5 py-4 text-ink-700">{emp.designation}</td>
+
                 <td className="px-5 py-4">
                   <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${ROLE_COLORS[emp.role] || 'bg-slate-100 text-slate-600'}`}>
                     {emp.role}
@@ -142,6 +151,15 @@ export default function UserManagement() {
                 value={editForm.designation}
                 onChange={(e) => setEditForm((f) => ({ ...f, designation: e.target.value }))}
                 className="w-full rounded-xl border border-ink-100 px-4 py-2.5 text-sm text-ink-700 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-[#334155]">Base Salary (Monthly)</label>
+              <input
+                type="number"
+                value={editForm.baseSalary}
+                onChange={(e) => setEditForm((f) => ({ ...f, baseSalary: Number(e.target.value) }))}
+                className="w-full rounded-xl border border-[#E5E7EB] px-4 py-2.5 text-sm text-[#334155] outline-none focus:border-[#1D4ED8] focus:ring-2 focus:ring-[#1D4ED8]/10"
               />
             </div>
             <div className="flex gap-3">

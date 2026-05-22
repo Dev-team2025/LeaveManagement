@@ -23,7 +23,7 @@ export function requireAuth() {
 
       const payload = jwt.verify(token, secret)
       const user = await User.findById(payload.sub)
-        .select('name email role department phone location isActive managerId')
+        .select('name email role department phone location isActive managerId baseSalary')
         .lean()
       if (!user || user.isActive === false) {
         return res.status(401).json({ message: 'Unauthorized' })
@@ -38,6 +38,7 @@ export function requireAuth() {
         phone: user.phone || '',
         location: user.location || '',
         managerId: user.managerId ? String(user.managerId) : null,
+        baseSalary: user.baseSalary || 0,
       }
 
       return next()
