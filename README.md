@@ -1,16 +1,98 @@
-# React + Vite
+# Leave Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack leave management app with role-based portals for Admin, HR, Manager, and Employee.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Role-based dashboards and routes
+- Leave requests with approval workflow
+- Leave types, balances, and policies
+- Holiday calendar and reports
+- JWT auth and profile endpoints
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React + Vite + Tailwind CSS
+- Node.js + Express + MongoDB (Mongoose)
+- Axios for API calls, JWT for auth
 
-## Expanding the ESLint configuration
+## Project Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Frontend: [src](src)
+- Backend: [backend/src](backend/src)
+
+## Getting Started
+
+### 1) Install dependencies
+
+```bash
+npm install
+npm install --prefix backend
+```
+
+### 2) Configure environment
+
+Frontend (repo root .env):
+
+```bash
+VITE_API_BASE_URL=http://localhost:8080/api
+```
+
+Backend:
+
+- Copy [backend/.env.example](backend/.env.example) to `backend/.env`
+- Set `MONGODB_URI`, `JWT_SECRET`, and other values as needed
+
+### 3) Seed demo data
+
+```bash
+npm run seed --prefix backend
+```
+
+### 4) Run dev servers
+
+```bash
+npm run dev:all
+```
+
+This starts:
+
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8080/api
+
+Alternatively, run them separately:
+
+```bash
+npm run dev
+npm run dev:backend
+```
+
+## Scripts
+
+Frontend (repo root):
+
+- `npm run dev` - Start Vite
+- `npm run dev:backend` - Start API only
+- `npm run dev:all` - Start frontend and backend
+- `npm run build` - Build frontend
+- `npm run lint` - Lint frontend
+- `npm run preview` - Preview frontend build
+
+Backend:
+
+- `npm run dev` - Start API with file watch
+- `npm run start` - Start API
+- `npm run seed` - Seed demo users
+
+## API
+
+Base URL: http://localhost:8080/api
+
+- `POST /auth/login`
+- `GET /auth/profile`
+- `POST /auth/logout`
+
+## Notes
+
+- If the API is not available in dev, login falls back to a mock user based on the email role keyword (admin, hr, manager, employee).
+- Vite also proxies `/api` to http://localhost:8080 for local development.
