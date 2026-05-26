@@ -6,7 +6,7 @@ import { Settings } from '../models/Settings.js'
 import { Notification } from '../models/Notification.js'
 import { User } from '../models/User.js'
 import { Holiday } from '../models/Holiday.js'
-import { diffDaysInclusive, countBusinessDays, isDateInAnyRange, toDateOnlyISO } from '../utils/dates.js'
+import { countBusinessDays, isDateInAnyRange, toDateOnlyISO } from '../utils/dates.js'
 import { getUsedDaysForUserInYear } from '../utils/balance.js'
 
 export const employeeRouter = express.Router()

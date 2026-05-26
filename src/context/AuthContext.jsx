@@ -1,8 +1,7 @@
-import { createContext, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { AuthContext } from '@/context/AuthContextStore'
 
 const AUTH_STORAGE_KEY = 'lms_auth'
-
-export const AuthContext = createContext(undefined)
 
 function readStoredAuth() {
   if (typeof window === 'undefined') {

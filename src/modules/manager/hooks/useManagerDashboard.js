@@ -29,6 +29,7 @@ export function useManagerDashboard() {
 
   useEffect(() => {
     loadDashboard()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [axiosInstance])
 
   return { ...data, isLoading, refresh: loadDashboard }

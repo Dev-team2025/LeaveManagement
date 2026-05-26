@@ -34,18 +34,13 @@ function BarChart({ data, label }) {
 export default function Reports() {
   const axiosInstance = useAxios()
   const [leaveRequests, setLeaveRequests] = useState([])
-  const [employees, setEmployees] = useState([])
   const [isLoading, setLoading] = useState(true)
 
   const loadData = useCallback(async (isMounted = true) => {
     try {
-      const [requests, emps] = await Promise.all([
-        hrService.getLeaveRequests(axiosInstance),
-        hrService.getEmployees(axiosInstance),
-      ])
+      const requests = await hrService.getLeaveRequests(axiosInstance)
       if (isMounted) {
         setLeaveRequests(requests)
-        setEmployees(emps)
       }
     } catch (err) {
       console.error('Failed to load reports data:', err)

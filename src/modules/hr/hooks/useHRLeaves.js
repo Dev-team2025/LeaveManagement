@@ -21,6 +21,7 @@ export function useHRLeaves() {
 
   useEffect(() => {
     loadRequests()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [axiosInstance])
 
   return { requests, isLoading, refresh: loadRequests }

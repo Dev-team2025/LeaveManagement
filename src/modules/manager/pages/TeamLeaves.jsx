@@ -1,7 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { useAppData } from '@/context/AppDataContext'
 import { Badge, Modal, Loader } from '@/components/common'
-import useAuth from '@/hooks/useAuth'
 import useAxios from '@/hooks/useAxios'
 import managerService from '@/modules/manager/services/managerService'
 
@@ -13,14 +11,12 @@ const FILTERS = [
 ]
 
 export default function TeamLeaves() {
-  const { approveLeave, rejectLeave } = useAppData()
-  const { user } = useAuth()
   const axiosInstance = useAxios()
   const [leaveRequests, setLeaveRequests] = useState([])
   const [isLoading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState('all')
   const [selectedRequest, setSelectedRequest] = useState(null)
-  const [selectedAction, setSelectedAction] = useState(null) // 'approve' or 'reject'
+  const [selectedAction, setSelectedAction] = useState(null)
   const [note, setNote] = useState('')
   const [isProcessing, setProcessing] = useState(false)
 
@@ -55,6 +51,7 @@ export default function TeamLeaves() {
 
   useEffect(() => {
     loadRequests()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [axiosInstance])
 
   const filteredRequests = useMemo(

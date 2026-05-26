@@ -1,4 +1,4 @@
-import { useAppData } from '@/context/AppDataContext'
+import { useAppData } from '@/hooks/useAppData'
 
 const TYPE_COLORS = {
   '#2563EB': { pill: 'bg-blue-100 text-blue-700',   bar: '#2563EB' },

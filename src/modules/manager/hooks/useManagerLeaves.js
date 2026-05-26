@@ -21,6 +21,7 @@ export function useManagerLeaves() {
 
   useEffect(() => {
     loadTeamLeaves()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [axiosInstance])
 
   return { teamLeaves, isLoading, refresh: loadTeamLeaves }

@@ -1,11 +1,12 @@
-import { createContext, useCallback, useContext, useMemo, useState, useEffect } from 'react'
+import { useCallback, useMemo, useState, useEffect } from 'react'
+import { AppDataContext } from '@/context/AppDataContextStore'
 import useAxios from '@/hooks/useAxios'
 import { useAuth } from '@/hooks/useAuth'
 import hrService from '@/modules/hr/services/hrService'
 import employeeService from '@/modules/employee/services/employeeService'
-import managerService from '@/modules/manager/services/managerService'
 import {
   HOLIDAYS,
+  LEAVE_BALANCES,
   LEAVE_POLICIES,
   getBalancesForEmployee,
   getLeaveRequestsByEmployee,
@@ -13,24 +14,12 @@ import {
   getNotificationsForUser,
 } from '@/data/mockData'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Context
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const AppDataContext = createContext(undefined)
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Provider
-// ─────────────────────────────────────────────────────────────────────────────
-
 export function AppDataProvider({ children }) {
   const axiosInstance = useAxios()
   const { isAuthenticated } = useAuth()
   const [employees, setEmployees] = useState([])
   const [leaveRequests, setLeaveRequests] = useState([])
-  const [leaveBalances, setLeaveBalances] = useState([])
   const [leavePolicies, setLeavePolicies] = useState(LEAVE_POLICIES)
-  const [holidays] = useState(HOLIDAYS)
   const [notifications, setNotifications] = useState([])
   const [isLoading, setLoading] = useState(true)
 
@@ -38,12 +27,10 @@ export function AppDataProvider({ children }) {
     setLoading(true)
     try {
       // Fetch all necessary data for the context based on roles
-      const [hrRequests, empLeaves, allEmployees, managerLeaves, managerTeam] = await Promise.all([
+      const [hrRequests, empLeaves, allEmployees] = await Promise.all([
         hrService.getLeaveRequests(axiosInstance).catch(() => []),
         employeeService.getLeaves(axiosInstance).catch(() => []),
         hrService.getEmployees(axiosInstance).catch(() => []),
-        managerService.getTeamLeaves(axiosInstance).catch(() => []),
-        managerService.getTeamMembers(axiosInstance).catch(() => []),
       ])
 
 
@@ -170,8 +157,8 @@ export function AppDataProvider({ children }) {
   )
 
   const getEmployeeBalances = useCallback(
-    (employeeId) => getBalancesForEmployee(employeeId, leaveBalances),
-    [leaveBalances],
+    (employeeId) => getBalancesForEmployee(employeeId, LEAVE_BALANCES),
+    [],
   )
 
   const getUserNotifications = useCallback(
@@ -189,10 +176,11 @@ export function AppDataProvider({ children }) {
       // State
       employees,
       leaveRequests,
-      leaveBalances,
+      leaveBalances: LEAVE_BALANCES,
       leavePolicies,
-      holidays,
+      holidays: HOLIDAYS,
       notifications,
+      isLoading,
       // Actions
       approveLeave,
       rejectLeave,
@@ -210,7 +198,7 @@ export function AppDataProvider({ children }) {
       getPendingRequests,
     }),
     [
-      employees, leaveRequests, leaveBalances, leavePolicies, holidays, notifications,
+      employees, leaveRequests, leavePolicies, notifications, isLoading,
       approveLeave, rejectLeave, applyLeave,
       markNotificationRead, markAllNotificationsRead,
       updatePolicy, addEmployee, updateEmployee,
@@ -222,12 +210,3 @@ export function AppDataProvider({ children }) {
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Hook
-// ─────────────────────────────────────────────────────────────────────────────
-
-export function useAppData() {
-  const ctx = useContext(AppDataContext)
-  if (!ctx) throw new Error('useAppData must be used within AppDataProvider')
-  return ctx
-}

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useAppData } from '@/context/AppDataContext'
+import { useAppData } from '@/hooks/useAppData'
 import useAuth from '@/hooks/useAuth'
 
 function initials(name) {

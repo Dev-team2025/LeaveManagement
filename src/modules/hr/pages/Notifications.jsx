@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react'
-import useAuth from '@/hooks/useAuth'
 import authService from '@/services/authService'
 import { Loader } from '@/components/common'
 
@@ -21,7 +20,6 @@ function timeAgo(dateStr) {
 }
 
 export default function Notifications() {
-  const { user } = useAuth()
   const [notifications, setNotifications] = useState([])
   const [isLoading, setLoading] = useState(true)
 

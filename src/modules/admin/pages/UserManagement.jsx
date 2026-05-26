@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useAppData } from '@/context/AppDataContext'
+import { useAppData } from '@/hooks/useAppData'
 import { Modal } from '@/components/common'
 
 const ROLE_COLORS = { employee: 'bg-blue-50 text-blue-700', manager: 'bg-purple-50 text-purple-700', hr: 'bg-emerald-50 text-emerald-700', admin: 'bg-red-50 text-red-700' }
