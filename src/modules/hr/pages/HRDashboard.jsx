@@ -1,6 +1,5 @@
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import useAuth from '@/hooks/useAuth'
 import useAxios from '@/hooks/useAxios'
 import hrService from '@/modules/hr/services/hrService'
 import { openAttachment } from '@/utils/helpers'
@@ -77,9 +76,7 @@ export default function HRDashboard() {
   const axiosInstance = useAxios()
   const [leaveRequests, setLeaveRequests] = useState([])
   const [employees, setEmployees] = useState([])
-  const [notifications, setNotifications] = useState([])
   const [isLoading, setLoading] = useState(true)
-  const { user } = useAuth()
 
   const loadData = useCallback(async (isMounted = true) => {
     try {
@@ -118,8 +115,6 @@ export default function HRDashboard() {
     () => [...leaveRequests].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 6),
     [leaveRequests],
   )
-
-  const unreadCount = 0 // Temporarily set to 0 until notification service is ready
 
   if (isLoading) {
     return (

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { StatCard, Badge, Loader } from '@/components/common'
-import { useAppData } from '@/context/AppDataContext'
+import { useAppData } from '@/hooks/useAppData'
 import useAuth from '@/hooks/useAuth'
 import useManagerDashboard from '@/modules/manager/hooks/useManagerDashboard'
 
@@ -30,7 +30,7 @@ function formatDate(d) {
 }
 
 export default function ManagerDashboard() {
-  const { leaveRequests, employees, notifications, isLoading: appLoading } = useAppData()
+  const { leaveRequests, employees, notifications, isLoading: appLoading, approveLeave } = useAppData()
   const { user } = useAuth()
   const { cards = [], teamStats = {}, isLoading: dashLoading } = useManagerDashboard()
   const managerId = user?.id
