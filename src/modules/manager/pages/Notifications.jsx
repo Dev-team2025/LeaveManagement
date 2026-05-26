@@ -1,4 +1,4 @@
-import { useAppData } from '@/context/AppDataContext'
+import { useAppData } from '@/hooks/useAppData'
 import useAuth from '@/hooks/useAuth'
 
 export default function ManagerNotifications() {
