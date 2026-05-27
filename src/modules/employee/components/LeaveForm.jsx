@@ -36,9 +36,17 @@ function LeaveForm({ balances = [] }) {
 
   useEffect(() => {
     const loadLeaveTypes = async () => {
-      const response = await employeeService.getLeaveTypes(axiosInstance)
-      setLeaveTypes(response.length > 0 ? response : ['Casual Leave', 'Sick Leave', 'Earned Leave'])
-      setValues((current) => ({ ...current, leaveType: response[0] || 'Casual Leave' }))
+      try {
+        const response = await employeeService.getLeaveTypes(axiosInstance)
+        const types = Array.isArray(response) && response.length > 0 
+          ? response 
+          : ['Casual Leave', 'Sick Leave', 'Earned Leave']
+        setLeaveTypes(types)
+        setValues((current) => ({ ...current, leaveType: types[0] }))
+      } catch (error) {
+        console.error('Failed to load leave types:', error)
+        setLeaveTypes(['Casual Leave', 'Sick Leave', 'Earned Leave'])
+      }
     }
 
     loadLeaveTypes()
